@@ -11,6 +11,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 
 import de.steffzilla.weighttracker.data.WeightEntry;
@@ -70,7 +71,13 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onDeleteClick(WeightEntry entry) {
-                // wired up in next commit
+                new MaterialAlertDialogBuilder(MainActivity.this)
+                        .setTitle(R.string.dialog_delete_title)
+                        .setMessage(R.string.dialog_delete_message)
+                        .setPositiveButton(R.string.button_delete,
+                                (d, w) -> viewModel.deleteEntry(entry))
+                        .setNegativeButton(R.string.button_cancel, null)
+                        .show();
             }
         });
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(this));

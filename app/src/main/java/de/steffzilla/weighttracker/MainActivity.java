@@ -15,6 +15,7 @@ import com.google.android.material.snackbar.Snackbar;
 
 import de.steffzilla.weighttracker.data.WeightEntry;
 import de.steffzilla.weighttracker.databinding.ActivityMainBinding;
+import de.steffzilla.weighttracker.ui.AddEditWeightBottomSheet;
 import de.steffzilla.weighttracker.ui.WeightEntryAdapter;
 import de.steffzilla.weighttracker.ui.WeightViewModel;
 import de.steffzilla.weighttracker.ui.WeightViewModelFactory;
@@ -89,7 +90,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openAddEditSheet(WeightEntry entryToEdit) {
-        // implemented in next commit
+        if (getSupportFragmentManager()
+                .findFragmentByTag(AddEditWeightBottomSheet.TAG) != null) return;
+        var sheet = entryToEdit != null
+                ? AddEditWeightBottomSheet.newInstance(entryToEdit)
+                : AddEditWeightBottomSheet.newInstance();
+        sheet.show(getSupportFragmentManager(), AddEditWeightBottomSheet.TAG);
     }
 
     @Override

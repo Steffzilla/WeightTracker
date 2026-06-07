@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">WeightTracker</string>
+    <string name="fab_add_description">Gewichtseintrag hinzufügen</string>
+    <string name="delete_entry_description">Eintrag löschen</string>
 </resources>

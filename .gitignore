@@ -1,0 +1,33 @@
+# Built variants and caches
+/build
+/captures
+.gradle
+.cxx
+.externalNativeBuild
+*.iml
+
+# Local configuration (Contains SDK paths / API Keys)
+local.properties
+.idea/caches
+.idea/libraries
+
+# Android Studio / IntelliJ personal settings
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/modules.xml
+.idea/deploymentTargetSelector.xml
+.idea/markdown.xml
+.idea/vcs.xml
+.idea/runConfigurations.xml
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Claude Code session data
+.claudecode/

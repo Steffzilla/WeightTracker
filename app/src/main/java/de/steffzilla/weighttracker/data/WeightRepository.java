@@ -32,4 +32,8 @@ public class WeightRepository {
     public boolean existsForDate(LocalDate date) {
         return dao.countByDate(date.toEpochDay()) > 0;
     }
+
+    public boolean existsForDateExcluding(LocalDate date, long excludeId) {
+        return dao.countByDateExcluding(date.toEpochDay(), excludeId) > 0;
+    }
 }

@@ -43,9 +43,11 @@ dependencies {
     implementation libs.material
     implementation libs.room.runtime
     implementation libs.lifecycle.livedata
+    implementation libs.lifecycle.viewmodel
     annotationProcessor libs.room.compiler
     testImplementation libs.junit
     testImplementation libs.mockito.core
+    testImplementation libs.arch.core.testing
     androidTestImplementation libs.espresso.core
     androidTestImplementation libs.ext.junit
 }

@@ -29,4 +29,7 @@ public interface WeightDao {
 
     @Query("SELECT COUNT(*) FROM weight_entries WHERE date = :epochDay")
     int countByDate(long epochDay);
+
+    @Query("SELECT COUNT(*) FROM weight_entries WHERE date = :epochDay AND id != :excludeId")
+    int countByDateExcluding(long epochDay, long excludeId);
 }

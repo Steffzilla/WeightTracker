@@ -1,6 +1,7 @@
 package de.steffzilla.weighttracker.ui;
 
 import android.os.Bundle;
+import android.text.method.DigitsKeyListener;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,6 +70,11 @@ public class AddEditWeightBottomSheet extends BottomSheetDialogFragment {
         viewModel = new ViewModelProvider(requireActivity(),
                 new WeightViewModelFactory(requireContext()))
                 .get(WeightViewModel.class);
+
+        // numberDecimal's default key listener only accepts '.'; allow the
+        // locale decimal separator (e.g. ',' in German) to be typed as well.
+        binding.editTextWeight.setKeyListener(
+                DigitsKeyListener.getInstance(Locale.getDefault(), false, true));
 
         Bundle args = getArguments();
         if (args != null) {

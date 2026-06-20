@@ -17,4 +17,6 @@
     <string name="dialog_delete_title">Eintrag löschen</string>
     <string name="dialog_delete_message">Diesen Gewichtseintrag wirklich löschen?</string>
     <string name="button_delete">Löschen</string>
+    <string name="error_date_future">Datum darf nicht in der Zukunft liegen.</string>
+    <string name="error_date_duplicate">Für dieses Datum existiert bereits ein Eintrag.</string>
 </resources>

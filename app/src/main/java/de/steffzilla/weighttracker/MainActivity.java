@@ -89,9 +89,9 @@ public class MainActivity extends AppCompatActivity {
                 .get(WeightViewModel.class);
         viewModel.getAllEntries().observe(this, adapter::setEntries);
         viewModel.getUserMessage().observe(this, event -> {
-            String msg = event.getContentIfNotConsumed();
-            if (msg != null) {
-                Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_LONG).show();
+            Integer msgResId = event.getContentIfNotConsumed();
+            if (msgResId != null) {
+                Snackbar.make(binding.getRoot(), msgResId, Snackbar.LENGTH_LONG).show();
             }
         });
     }

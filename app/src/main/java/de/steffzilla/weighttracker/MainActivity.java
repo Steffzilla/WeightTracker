@@ -1,9 +1,13 @@
 package de.steffzilla.weighttracker;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.ViewGroup;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -17,6 +21,7 @@ import com.google.android.material.snackbar.Snackbar;
 import de.steffzilla.weighttracker.data.WeightEntry;
 import de.steffzilla.weighttracker.databinding.ActivityMainBinding;
 import de.steffzilla.weighttracker.ui.AddEditWeightBottomSheet;
+import de.steffzilla.weighttracker.ui.StatisticsActivity;
 import de.steffzilla.weighttracker.ui.WeightEntryAdapter;
 import de.steffzilla.weighttracker.ui.WeightViewModel;
 import de.steffzilla.weighttracker.ui.WeightViewModelFactory;
@@ -40,6 +45,21 @@ public class MainActivity extends AppCompatActivity {
         setupViewModel();
 
         binding.fabAdd.setOnClickListener(v -> openAddEditSheet(null));
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(@NonNull Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.action_statistics) {
+            startActivity(new Intent(this, StatisticsActivity.class));
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void applyWindowInsets() {

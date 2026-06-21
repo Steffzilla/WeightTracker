@@ -24,7 +24,7 @@ import de.steffzilla.weighttracker.stats.WeightStatisticsCalculator;
  */
 public class StatisticsViewModel extends ViewModel {
 
-    static final ChartRange DEFAULT_RANGE = ChartRange.MONTH;
+    static final ChartRange DEFAULT_RANGE = ChartRange.WEEK;
 
     private final WeightStatisticsCalculator calculator;
     private final Supplier<LocalDate> today;

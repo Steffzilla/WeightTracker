@@ -49,8 +49,8 @@ public class StatisticsViewModelTest {
     }
 
     @Test
-    public void defaultRange_isMonth() {
-        assertEquals(ChartRange.MONTH, viewModel.getSelectedRange().getValue());
+    public void defaultRange_isWeek() {
+        assertEquals(ChartRange.WEEK, viewModel.getSelectedRange().getValue());
     }
 
     @Test
@@ -81,11 +81,11 @@ public class StatisticsViewModelTest {
                 new WeightEntry(TODAY.minusDays(20), 80f),
                 new WeightEntry(TODAY, 79f)));
 
+        viewModel.setRange(ChartRange.MONTH);
         // MONTH (30 days): both entries are inside the window.
         assertEquals(2, viewModel.getChartModel().getValue().stats().count());
 
         viewModel.setRange(ChartRange.WEEK);
-
         // WEEK (7 days): the 20-day-old entry drops out.
         assertEquals(1, viewModel.getChartModel().getValue().stats().count());
     }

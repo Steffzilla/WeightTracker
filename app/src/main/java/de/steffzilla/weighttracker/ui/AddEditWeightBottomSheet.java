@@ -1,6 +1,7 @@
 package de.steffzilla.weighttracker.ui;
 
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.method.DigitsKeyListener;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -75,6 +76,12 @@ public class AddEditWeightBottomSheet extends BottomSheetDialogFragment {
         // locale decimal separator (e.g. ',' in German) to be typed as well.
         binding.editTextWeight.setKeyListener(
                 DigitsKeyListener.getInstance(Locale.getDefault(), false, true));
+        // The locale-aware DigitsKeyListener reports a TEXT input type when the
+        // decimal separator is non-ASCII (e.g. ',' in German), which would summon
+        // the full keyboard. Force the decimal number IME without touching the key
+        // listener, so only digits + the locale separator stay typeable.
+        binding.editTextWeight.setRawInputType(
+                InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
 
         Bundle args = getArguments();
         if (args != null) {

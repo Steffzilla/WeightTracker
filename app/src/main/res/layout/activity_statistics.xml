@@ -162,52 +162,42 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnWeek"
-                    style="?attr/materialButtonOutlinedStyle"
+                    style="@style/Widget.WeightTracker.RangeButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:minWidth="0dp"
-                    android:minHeight="48dp"
                     android:text="@string/range_week" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnMonth"
-                    style="?attr/materialButtonOutlinedStyle"
+                    style="@style/Widget.WeightTracker.RangeButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:minWidth="0dp"
-                    android:minHeight="48dp"
                     android:text="@string/range_month" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnThreeMonths"
-                    style="?attr/materialButtonOutlinedStyle"
+                    style="@style/Widget.WeightTracker.RangeButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:minWidth="0dp"
-                    android:minHeight="48dp"
                     android:text="@string/range_three_months" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnYear"
-                    style="?attr/materialButtonOutlinedStyle"
+                    style="@style/Widget.WeightTracker.RangeButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:minWidth="0dp"
-                    android:minHeight="48dp"
                     android:text="@string/range_year" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnAll"
-                    style="?attr/materialButtonOutlinedStyle"
+                    style="@style/Widget.WeightTracker.RangeButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:minWidth="0dp"
-                    android:minHeight="48dp"
                     android:text="@string/range_all" />
             </com.google.android.material.button.MaterialButtonToggleGroup>
         </LinearLayout>

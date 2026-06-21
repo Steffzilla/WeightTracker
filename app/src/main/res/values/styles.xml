@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Outlined segmented button sized for five equal columns: trims the default
+         horizontal padding/insets so short labels (e.g. "Woche", "Monat") fit. -->
+    <style name="Widget.WeightTracker.RangeButton" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:insetLeft">0dp</item>
+        <item name="android:insetRight">0dp</item>
+        <item name="android:paddingLeft">4dp</item>
+        <item name="android:paddingRight">4dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">48dp</item>
+    </style>
+
+</resources>

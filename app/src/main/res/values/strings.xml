@@ -21,7 +21,7 @@
     <string name="error_date_duplicate">Für dieses Datum existiert bereits ein Eintrag.</string>
 
     <!-- Statistics screen -->
-    <string name="title_statistics">Verlauf</string>
+    <string name="title_statistics">Gewichtsverlauf</string>
     <string name="action_statistics">Verlauf anzeigen</string>
     <string name="nav_up_description">Zurück</string>
     <string name="range_week">Woche</string>

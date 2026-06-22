@@ -185,4 +185,71 @@ public class WeightStatisticsCalculatorTest {
         assertEquals(WeightStatisticsCalculator.MARKER_THRESHOLD, model.stats().count());
         assertTrue(model.showMarkers());
     }
+
+    @Test
+    public void fewerPointsThanBudget_areNotAggregated() {
+        List<WeightEntry> all = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            all.add(entry(TODAY.minusDays(i), 80f + i));
+        }
+
+        ChartModel model = calculator.build(all, ChartRange.ALL, TODAY, 10);
+
+        assertEquals(5, model.points().size());
+        assertEquals(5, model.stats().count());
+        assertTrue(model.showMarkers());
+    }
+
+    @Test
+    public void morePointsThanBudget_areAggregatedToBucketCount() {
+        // 100 daily entries, budget 10 -> 10 equal-width buckets, all non-empty.
+        List<WeightEntry> all = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            all.add(entry(TODAY.minusDays(i), 80f + (i % 5)));
+        }
+
+        ChartModel model = calculator.build(all, ChartRange.ALL, TODAY, 10);
+
+        assertEquals(10, model.points().size());
+        // Raw count is preserved in the summary statistics.
+        assertEquals(100, model.stats().count());
+        // Aggregated points are bucket averages, not real readings -> no markers.
+        assertFalse(model.showMarkers());
+    }
+
+    @Test
+    public void aggregation_averagesWeightsWithinEachBucket() {
+        // Four consecutive days, budget 2 -> two buckets of two days each.
+        List<WeightEntry> all = List.of(
+                entry(TODAY.minusDays(3), 80f),
+                entry(TODAY.minusDays(2), 82f),
+                entry(TODAY.minusDays(1), 78f),
+                entry(TODAY, 76f));
+
+        ChartModel model = calculator.build(all, ChartRange.ALL, TODAY, 2);
+
+        assertEquals(2, model.points().size());
+        assertEquals(81f, model.points().get(0).weightKg(), DELTA); // mean(80, 82)
+        assertEquals(77f, model.points().get(1).weightKg(), DELTA); // mean(78, 76)
+        // Stats stay raw: true extremes and endpoints, not the bucket means.
+        assertEquals(76f, model.stats().min(), DELTA);
+        assertEquals(82f, model.stats().max(), DELTA);
+        assertEquals(79f, model.stats().average(), DELTA);
+        assertEquals(-4f, model.stats().change(), DELTA);
+        assertEquals(80f, model.stats().firstWeight(), DELTA);
+        assertEquals(76f, model.stats().lastWeight(), DELTA);
+    }
+
+    @Test
+    public void noLimit_keepsEveryPoint() {
+        List<WeightEntry> all = new ArrayList<>();
+        for (int i = 0; i < 50; i++) {
+            all.add(entry(TODAY.minusDays(i), 80f + (i % 5)));
+        }
+
+        ChartModel model = calculator.build(
+                all, ChartRange.ALL, TODAY, WeightStatisticsCalculator.NO_LIMIT);
+
+        assertEquals(50, model.points().size());
+    }
 }

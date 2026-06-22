@@ -33,6 +33,9 @@ public class StatisticsViewModel extends ViewModel {
     private final MutableLiveData<ChartRange> selectedRange = new MutableLiveData<>(DEFAULT_RANGE);
     private final MediatorLiveData<ChartModel> chartModel = new MediatorLiveData<>();
 
+    /** Point budget for the chart; refined once the view reports its real width. */
+    private int maxPoints = WeightStatisticsCalculator.DEFAULT_MAX_POINTS;
+
     public StatisticsViewModel(WeightRepository repository,
                                WeightStatisticsCalculator calculator,
                                Supplier<LocalDate> today) {
@@ -58,6 +61,17 @@ public class StatisticsViewModel extends ViewModel {
         }
     }
 
+    /**
+     * Sets how many points the chart may draw, derived from its available width.
+     * Recomputes only when the budget actually changes.
+     */
+    public void setMaxPoints(int maxPoints) {
+        if (maxPoints > 0 && maxPoints != this.maxPoints) {
+            this.maxPoints = maxPoints;
+            recompute();
+        }
+    }
+
     private void recompute() {
         ChartRange range = selectedRange.getValue();
         if (range == null) {
@@ -67,6 +81,6 @@ public class StatisticsViewModel extends ViewModel {
         if (current == null) {
             current = Collections.emptyList();
         }
-        chartModel.setValue(calculator.build(current, range, today.get()));
+        chartModel.setValue(calculator.build(current, range, today.get(), maxPoints));
     }
 }

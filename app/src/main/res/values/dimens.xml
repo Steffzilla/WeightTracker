@@ -15,6 +15,9 @@
     <dimen name="chart_marker_radius">3dp</dimen>
     <dimen name="chart_label_gap">6dp</dimen>
     <dimen name="chart_label_text_size">12sp</dimen>
+    <!-- Minimum horizontal spacing between drawn points; the chart width divided by
+         this gives the point budget above which measurements are averaged. -->
+    <dimen name="chart_min_point_spacing">8dp</dimen>
     <dimen name="screen_padding">16dp</dimen>
     <dimen name="stats_row_spacing">8dp</dimen>
     <dimen name="stat_label_text_size">12sp</dimen>

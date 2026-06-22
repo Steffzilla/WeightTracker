@@ -42,6 +42,23 @@ public class StatisticsActivity extends AppCompatActivity {
         applyWindowInsets();
         setupRangeToggle();
         setupViewModel();
+        setupPointBudget();
+    }
+
+    /**
+     * Derives how many points the chart can legibly draw from its measured width and
+     * feeds it to the ViewModel. Re-runs on width changes (e.g. rotation) so the chart
+     * resolution adapts to the available space.
+     */
+    private void setupPointBudget() {
+        float minSpacing = getResources().getDimension(R.dimen.chart_min_point_spacing);
+        binding.chartView.addOnLayoutChangeListener(
+                (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                    int width = right - left;
+                    if (width > 0) {
+                        viewModel.setMaxPoints(Math.round(width / minSpacing));
+                    }
+                });
     }
 
     private void applyWindowInsets() {
@@ -115,13 +132,11 @@ public class StatisticsActivity extends AppCompatActivity {
                     stats.firstDate().format(dateFormatter));
         }
 
-        float firstWeight = model.points().get(0).weightKg();
-        float lastWeight = model.points().get(model.points().size() - 1).weightKg();
         return getString(R.string.chart_content_description,
                 rangeLabel,
-                formatWeight(locale, firstWeight),
+                formatWeight(locale, stats.firstWeight()),
                 stats.firstDate().format(dateFormatter),
-                formatWeight(locale, lastWeight),
+                formatWeight(locale, stats.lastWeight()),
                 stats.lastDate().format(dateFormatter),
                 formatChange(locale, stats.change()));
     }

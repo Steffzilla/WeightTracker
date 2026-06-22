@@ -11,11 +11,24 @@ import de.steffzilla.weighttracker.data.WeightEntry;
  * Pure, framework-free transformation of raw weight entries into a {@link ChartModel}
  * for a given {@link ChartRange}. {@code today} is injected so the rolling-window
  * filtering is deterministically testable.
+ *
+ * <p>When a range holds more measurements than the chart can legibly show, the points
+ * are down-sampled by averaging into equal-width time buckets (see
+ * {@link #build(List, ChartRange, LocalDate, int)}). This smooths a daily up/down
+ * "sawtooth" into a readable trend. The summary {@link WeightStatistics} (min, max,
+ * average, change) are always computed from the raw data, so true extremes are never
+ * hidden by aggregation.
  */
 public class WeightStatisticsCalculator {
 
-    /** Above this many points in range, individual markers are suppressed. */
+    /** Above this many drawn points, individual markers are suppressed. */
     public static final int MARKER_THRESHOLD = 40;
+
+    /** Passed as {@code maxPoints} to disable aggregation entirely. */
+    public static final int NO_LIMIT = 0;
+
+    /** Fallback point budget used until the view reports its real width. */
+    public static final int DEFAULT_MAX_POINTS = 60;
 
     /** Half-span used for the y-axis when all values are (nearly) equal, in kg. */
     private static final float DEGENERATE_HALF_SPAN = 1.0f;
@@ -25,7 +38,18 @@ public class WeightStatisticsCalculator {
 
     private static final float SPAN_EPSILON = 0.0001f;
 
+    /** Convenience overload that never aggregates. */
     public ChartModel build(List<WeightEntry> all, ChartRange range, LocalDate today) {
+        return build(all, range, today, NO_LIMIT);
+    }
+
+    /**
+     * @param maxPoints the largest number of points the chart should draw; when the
+     *                  range holds more, they are averaged into that many time buckets.
+     *                  Use {@link #NO_LIMIT} (or any value {@code <= 0}) to draw every
+     *                  raw point.
+     */
+    public ChartModel build(List<WeightEntry> all, ChartRange range, LocalDate today, int maxPoints) {
         LocalDate start = range.isAll() ? null : today.minusDays(range.getDays() - 1L);
 
         List<WeightEntry> filtered = new ArrayList<>();
@@ -46,48 +70,106 @@ public class WeightStatisticsCalculator {
 
         filtered.sort(Comparator.comparing(WeightEntry::getDate));
 
-        List<ChartPoint> points = new ArrayList<>(filtered.size());
+        // Summary statistics are computed over the raw measurements, independent of any
+        // later down-sampling, so reported extremes stay true.
+        List<ChartPoint> rawPoints = new ArrayList<>(filtered.size());
         float min = Float.MAX_VALUE;
         float max = -Float.MAX_VALUE;
         float sum = 0f;
         for (WeightEntry e : filtered) {
             float w = e.getWeightKg();
-            points.add(new ChartPoint(e.getDate(), w));
+            rawPoints.add(new ChartPoint(e.getDate(), w));
             min = Math.min(min, w);
             max = Math.max(max, w);
             sum += w;
         }
 
-        int count = points.size();
+        int count = rawPoints.size();
         float average = sum / count;
-        float firstWeight = points.get(0).weightKg();
-        float lastWeight = points.get(count - 1).weightKg();
+        float firstWeight = rawPoints.get(0).weightKg();
+        float lastWeight = rawPoints.get(count - 1).weightKg();
         float change = lastWeight - firstWeight;
-        LocalDate firstDate = points.get(0).date();
-        LocalDate lastDate = points.get(count - 1).date();
-
-        float yMin;
-        float yMax;
-        float span = max - min;
-        if (span < SPAN_EPSILON) {
-            yMin = min - DEGENERATE_HALF_SPAN;
-            yMax = max + DEGENERATE_HALF_SPAN;
-        } else {
-            float pad = span * PADDING_FRACTION;
-            yMin = min - pad;
-            yMax = max + pad;
-        }
+        LocalDate firstDate = rawPoints.get(0).date();
+        LocalDate lastDate = rawPoints.get(count - 1).date();
 
         // Bounded ranges anchor the x-axis to [start .. today] so the most recent
         // value stays at the right edge; ALL spans the actual data extent.
         LocalDate xStart = range.isAll() ? firstDate : start;
         LocalDate xEnd = range.isAll() ? lastDate : today;
 
-        boolean showMarkers = count <= MARKER_THRESHOLD;
+        boolean aggregated = maxPoints > 0 && count > maxPoints;
+        List<ChartPoint> points = aggregated
+                ? aggregate(rawPoints, maxPoints, xStart, xEnd)
+                : rawPoints;
+
+        // Scale the y-axis to the points actually drawn so the line fills the chart.
+        float displayMin = Float.MAX_VALUE;
+        float displayMax = -Float.MAX_VALUE;
+        for (ChartPoint p : points) {
+            displayMin = Math.min(displayMin, p.weightKg());
+            displayMax = Math.max(displayMax, p.weightKg());
+        }
+
+        float yMin;
+        float yMax;
+        float span = displayMax - displayMin;
+        if (span < SPAN_EPSILON) {
+            yMin = displayMin - DEGENERATE_HALF_SPAN;
+            yMax = displayMax + DEGENERATE_HALF_SPAN;
+        } else {
+            float pad = span * PADDING_FRACTION;
+            yMin = displayMin - pad;
+            yMax = displayMax + pad;
+        }
+
+        // Markers mark real measurements; suppress them when the line is dense or its
+        // points are bucket averages rather than actual readings.
+        boolean showMarkers = !aggregated && points.size() <= MARKER_THRESHOLD;
 
         WeightStatistics stats = new WeightStatistics(
-                count, min, max, average, change, firstDate, lastDate);
+                count, min, max, average, change, firstWeight, lastWeight, firstDate, lastDate);
 
         return new ChartModel(points, yMin, yMax, xStart, xEnd, showMarkers, stats);
+    }
+
+    /**
+     * Down-samples {@code points} into at most {@code buckets} averaged points by
+     * splitting {@code [xStart .. xEnd]} into equal-width day buckets and averaging the
+     * date and weight of the measurements that fall in each. Empty buckets are dropped;
+     * the result stays sorted ascending by date.
+     */
+    private static List<ChartPoint> aggregate(List<ChartPoint> points, int buckets,
+                                              LocalDate xStart, LocalDate xEnd) {
+        long startDay = xStart.toEpochDay();
+        long endDay = xEnd.toEpochDay();
+        long days = endDay - startDay + 1L;
+
+        double[] weightSum = new double[buckets];
+        double[] daySum = new double[buckets];
+        int[] counts = new int[buckets];
+
+        for (ChartPoint p : points) {
+            long offset = p.date().toEpochDay() - startDay;
+            int idx = (int) (offset * buckets / days);
+            if (idx < 0) {
+                idx = 0;
+            } else if (idx >= buckets) {
+                idx = buckets - 1;
+            }
+            weightSum[idx] += p.weightKg();
+            daySum[idx] += p.date().toEpochDay();
+            counts[idx]++;
+        }
+
+        List<ChartPoint> result = new ArrayList<>(buckets);
+        for (int b = 0; b < buckets; b++) {
+            if (counts[b] == 0) {
+                continue;
+            }
+            long meanDay = Math.round(daySum[b] / counts[b]);
+            float meanWeight = (float) (weightSum[b] / counts[b]);
+            result.add(new ChartPoint(LocalDate.ofEpochDay(meanDay), meanWeight));
+        }
+        return result;
     }
 }

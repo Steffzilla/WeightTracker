@@ -92,9 +92,11 @@ public class WeightStatisticsCalculator {
         LocalDate firstDate = rawPoints.get(0).date();
         LocalDate lastDate = rawPoints.get(count - 1).date();
 
-        // Bounded ranges anchor the x-axis to [start .. today] so the most recent
-        // value stays at the right edge; ALL spans the actual data extent.
-        LocalDate xStart = range.isAll() ? firstDate : start;
+        // Anchor the x-axis to the actual data extent so points fill the width even
+        // when a wide window (e.g. year) holds only recent entries; without this a
+        // sparse year crams every point into a tiny strip at the right edge. Bounded
+        // ranges still extend the right edge to today so recency stays readable.
+        LocalDate xStart = firstDate;
         LocalDate xEnd = range.isAll() ? lastDate : today;
 
         boolean aggregated = maxPoints > 0 && count > maxPoints;

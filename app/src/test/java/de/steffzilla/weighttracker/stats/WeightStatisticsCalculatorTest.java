@@ -126,12 +126,28 @@ public class WeightStatisticsCalculatorTest {
     }
 
     @Test
-    public void boundedRange_anchorsXAxisToStartAndToday() {
+    public void boundedRange_anchorsXAxisToFirstDataPointAndToday() {
         List<WeightEntry> all = List.of(entry(TODAY.minusDays(3), 80f));
 
         ChartModel model = calculator.build(all, ChartRange.WEEK, TODAY);
 
-        assertEquals(TODAY.minusDays(6), model.xStart());
+        // X-axis starts at the first datum (not the empty window start) and ends today.
+        assertEquals(TODAY.minusDays(3), model.xStart());
+        assertEquals(TODAY, model.xEnd());
+    }
+
+    @Test
+    public void wideWindowWithOnlyRecentData_scalesXAxisToData() {
+        // Year window but all entries are from the last few days: the x-axis should
+        // span [firstDate .. today], not [today-364 .. today], so the points fill the
+        // width instead of overlapping in a strip at the right edge.
+        List<WeightEntry> all = List.of(
+                entry(TODAY.minusDays(2), 80f),
+                entry(TODAY, 79f));
+
+        ChartModel model = calculator.build(all, ChartRange.YEAR, TODAY);
+
+        assertEquals(TODAY.minusDays(2), model.xStart());
         assertEquals(TODAY, model.xEnd());
     }
 

@@ -107,9 +107,12 @@ public class WeightChartView extends View {
         float leftInset = Math.max(maxLabel, minLabel) + labelGap;
         float bottomInset = textHeight + labelGap;
 
-        float plotLeft = getPaddingLeft() + leftInset;
+        // Inset horizontally by the marker footprint so points at the very edges
+        // (notably today at the right) are not clipped to half-circles.
+        float pointInset = markerRadius + strokeWidth / 2f;
+        float plotLeft = getPaddingLeft() + leftInset + pointInset;
         float plotTop = getPaddingTop() + textHeight / 2f;
-        float plotRight = getWidth() - getPaddingRight();
+        float plotRight = getWidth() - getPaddingRight() - pointInset;
         float plotBottom = getHeight() - getPaddingBottom() - bottomInset;
         float plotWidth = plotRight - plotLeft;
         float plotHeight = plotBottom - plotTop;

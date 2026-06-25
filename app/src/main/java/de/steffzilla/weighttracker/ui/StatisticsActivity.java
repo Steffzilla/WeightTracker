@@ -1,5 +1,6 @@
 package de.steffzilla.weighttracker.ui;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 
@@ -10,6 +11,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
 
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -19,6 +21,7 @@ import de.steffzilla.weighttracker.R;
 import de.steffzilla.weighttracker.databinding.ActivityStatisticsBinding;
 import de.steffzilla.weighttracker.stats.ChartModel;
 import de.steffzilla.weighttracker.stats.ChartRange;
+import de.steffzilla.weighttracker.stats.WeightBounds;
 import de.steffzilla.weighttracker.stats.WeightStatistics;
 
 public class StatisticsActivity extends AppCompatActivity {
@@ -43,6 +46,17 @@ public class StatisticsActivity extends AppCompatActivity {
         setupRangeToggle();
         setupViewModel();
         setupPointBudget();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Re-read the target band each time the screen is shown so changes made in
+        // Settings take effect on return without keeping the ViewModel coupled to prefs.
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        viewModel.setBounds(WeightBounds.fromPreferences(
+                prefs.getString(WeightBounds.PREF_KEY_LOWER, null),
+                prefs.getString(WeightBounds.PREF_KEY_UPPER, null)));
     }
 
     /**
@@ -126,19 +140,40 @@ public class StatisticsActivity extends AppCompatActivity {
         WeightStatistics stats = model.stats();
 
         if (stats.count() == 1) {
-            return getString(R.string.chart_content_description_single,
+            return withTargetBand(getString(R.string.chart_content_description_single,
                     rangeLabel,
                     formatWeight(locale, stats.average()),
-                    stats.firstDate().format(dateFormatter));
+                    stats.firstDate().format(dateFormatter)), model);
         }
 
-        return getString(R.string.chart_content_description,
+        return withTargetBand(getString(R.string.chart_content_description,
                 rangeLabel,
                 formatWeight(locale, stats.firstWeight()),
                 stats.firstDate().format(dateFormatter),
                 formatWeight(locale, stats.lastWeight()),
                 stats.lastDate().format(dateFormatter),
-                formatChange(locale, stats.change()));
+                formatChange(locale, stats.change())), model);
+    }
+
+    /** Appends a spoken description of the target band, if any side is set. */
+    private CharSequence withTargetBand(String base, ChartModel model) {
+        Locale locale = getResources().getConfiguration().getLocales().get(0);
+        boolean hasLower = model.lowerBound() != null;
+        boolean hasUpper = model.upperBound() != null;
+        if (hasLower && hasUpper) {
+            return base + getString(R.string.chart_target_both,
+                    formatWeight(locale, model.lowerBound()),
+                    formatWeight(locale, model.upperBound()));
+        }
+        if (hasLower) {
+            return base + getString(R.string.chart_target_lower,
+                    formatWeight(locale, model.lowerBound()));
+        }
+        if (hasUpper) {
+            return base + getString(R.string.chart_target_upper,
+                    formatWeight(locale, model.upperBound()));
+        }
+        return base;
     }
 
     private static String formatWeight(Locale locale, float value) {

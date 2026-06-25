@@ -2,6 +2,7 @@ package de.steffzilla.weighttracker.stats;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Before;
@@ -254,6 +255,75 @@ public class WeightStatisticsCalculatorTest {
         assertEquals(-4f, model.stats().change(), DELTA);
         assertEquals(80f, model.stats().firstWeight(), DELTA);
         assertEquals(76f, model.stats().lastWeight(), DELTA);
+    }
+
+    @Test
+    public void noBounds_leavesBoundsNullAndYRangeUnchanged() {
+        List<WeightEntry> all = List.of(
+                entry(TODAY.minusDays(2), 80f),
+                entry(TODAY.minusDays(1), 82f),
+                entry(TODAY, 78f));
+
+        ChartModel model = calculator.build(all, ChartRange.MONTH, TODAY);
+
+        assertNull(model.lowerBound());
+        assertNull(model.upperBound());
+        assertEquals(77.6f, model.yMin(), DELTA);
+        assertEquals(82.4f, model.yMax(), DELTA);
+    }
+
+    @Test
+    public void lowerBoundBelowData_expandsYRangeDown() {
+        List<WeightEntry> all = List.of(
+                entry(TODAY.minusDays(2), 80f),
+                entry(TODAY.minusDays(1), 82f),
+                entry(TODAY, 78f));
+        WeightBounds bounds = new WeightBounds(70f, null);
+
+        ChartModel model = calculator.build(
+                all, ChartRange.MONTH, TODAY, WeightStatisticsCalculator.NO_LIMIT, bounds);
+
+        // display span now 70..82 -> 12, 10% pad each side
+        assertEquals(68.8f, model.yMin(), DELTA);
+        assertEquals(83.2f, model.yMax(), DELTA);
+        assertEquals(70f, model.lowerBound(), DELTA);
+        assertNull(model.upperBound());
+    }
+
+    @Test
+    public void upperBoundAboveData_expandsYRangeUp() {
+        List<WeightEntry> all = List.of(
+                entry(TODAY.minusDays(2), 80f),
+                entry(TODAY.minusDays(1), 82f),
+                entry(TODAY, 78f));
+        WeightBounds bounds = new WeightBounds(null, 90f);
+
+        ChartModel model = calculator.build(
+                all, ChartRange.MONTH, TODAY, WeightStatisticsCalculator.NO_LIMIT, bounds);
+
+        // display span now 78..90 -> 12, 10% pad each side
+        assertEquals(76.8f, model.yMin(), DELTA);
+        assertEquals(91.2f, model.yMax(), DELTA);
+        assertEquals(90f, model.upperBound(), DELTA);
+        assertNull(model.lowerBound());
+    }
+
+    @Test
+    public void boundsWithinData_doNotChangeYRangeButAreCarried() {
+        List<WeightEntry> all = List.of(
+                entry(TODAY.minusDays(2), 80f),
+                entry(TODAY.minusDays(1), 82f),
+                entry(TODAY, 78f));
+        WeightBounds bounds = new WeightBounds(79f, 81f);
+
+        ChartModel model = calculator.build(
+                all, ChartRange.MONTH, TODAY, WeightStatisticsCalculator.NO_LIMIT, bounds);
+
+        // data still drives the extent: 78..82 -> 4, 10% pad
+        assertEquals(77.6f, model.yMin(), DELTA);
+        assertEquals(82.4f, model.yMax(), DELTA);
+        assertEquals(79f, model.lowerBound(), DELTA);
+        assertEquals(81f, model.upperBound(), DELTA);
     }
 
     @Test

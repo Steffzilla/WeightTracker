@@ -2,6 +2,7 @@ package de.steffzilla.weighttracker.ui;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
@@ -33,12 +34,16 @@ public class WeightChartView extends View {
     private final Paint linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint markerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint gridPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint boundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path linePath = new Path();
 
     private final float strokeWidth;
     private final float markerRadius;
     private final float labelGap;
+
+    private final int textColor;
+    private final int boundColor;
 
     @Nullable
     private ChartModel model;
@@ -62,8 +67,10 @@ public class WeightChartView extends View {
                 this, com.google.android.material.R.attr.colorPrimary);
         int gridColor = MaterialColors.getColor(
                 this, com.google.android.material.R.attr.colorOutlineVariant);
-        int textColor = MaterialColors.getColor(
+        textColor = MaterialColors.getColor(
                 this, com.google.android.material.R.attr.colorOnSurfaceVariant);
+        boundColor = MaterialColors.getColor(
+                this, com.google.android.material.R.attr.colorTertiary);
 
         linePaint.setStyle(Paint.Style.STROKE);
         linePaint.setStrokeWidth(strokeWidth);
@@ -77,6 +84,14 @@ public class WeightChartView extends View {
         gridPaint.setStyle(Paint.Style.STROKE);
         gridPaint.setStrokeWidth(getResources().getDimension(R.dimen.chart_grid_stroke));
         gridPaint.setColor(gridColor);
+
+        // Dashed so the target band reads as a reference, not a measurement, even
+        // before its colour is perceived.
+        float dash = getResources().getDimension(R.dimen.chart_bound_dash);
+        boundPaint.setStyle(Paint.Style.STROKE);
+        boundPaint.setStrokeWidth(getResources().getDimension(R.dimen.chart_bound_stroke));
+        boundPaint.setColor(boundColor);
+        boundPaint.setPathEffect(new DashPathEffect(new float[]{dash, dash}, 0f));
 
         textPaint.setColor(textColor);
         textPaint.setTextSize(getResources().getDimension(R.dimen.chart_label_text_size));
@@ -128,6 +143,10 @@ public class WeightChartView extends View {
         drawGridLine(canvas, locale, yMax, plotLeft, plotRight, plotTop, plotBottom, yMin, yRange);
         drawGridLine(canvas, locale, (yMin + yMax) / 2f, plotLeft, plotRight, plotTop, plotBottom, yMin, yRange);
         drawGridLine(canvas, locale, yMin, plotLeft, plotRight, plotTop, plotBottom, yMin, yRange);
+
+        // Target band reference lines, drawn under the data line so it stays dominant.
+        drawBoundLine(canvas, locale, model.lowerBound(), plotLeft, plotRight, plotTop, plotBottom, yMin, yRange);
+        drawBoundLine(canvas, locale, model.upperBound(), plotLeft, plotRight, plotTop, plotBottom, yMin, yRange);
 
         long startDay = model.xStart().toEpochDay();
         long endDay = model.xEnd().toEpochDay();
@@ -181,6 +200,27 @@ public class WeightChartView extends View {
         float textY = y - (textPaint.getFontMetrics().ascent + textPaint.getFontMetrics().descent) / 2f;
         canvas.drawText(formatWeight(locale, value), plotLeft - labelGap, textY, textPaint);
         textPaint.setTextAlign(Paint.Align.LEFT);
+    }
+
+    /**
+     * Draws one dashed target-band reference line at {@code value} kg with its value
+     * labelled at the right edge in the band colour. Skips drawing when {@code value}
+     * is {@code null} (that side of the band is unset).
+     */
+    private void drawBoundLine(Canvas canvas, Locale locale, @Nullable Float value,
+                               float plotLeft, float plotRight, float plotTop, float plotBottom,
+                               float yMin, float yRange) {
+        if (value == null) {
+            return;
+        }
+        float y = plotBottom - ((value - yMin) / yRange) * plotHeight(plotTop, plotBottom);
+        canvas.drawLine(plotLeft, y, plotRight, y, boundPaint);
+
+        textPaint.setColor(boundColor);
+        textPaint.setTextAlign(Paint.Align.RIGHT);
+        canvas.drawText(formatWeight(locale, value), plotRight, y - labelGap, textPaint);
+        textPaint.setTextAlign(Paint.Align.LEFT);
+        textPaint.setColor(textColor);
     }
 
     private static float plotHeight(float plotTop, float plotBottom) {

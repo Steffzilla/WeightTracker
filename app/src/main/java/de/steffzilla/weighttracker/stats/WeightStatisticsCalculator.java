@@ -38,9 +38,14 @@ public class WeightStatisticsCalculator {
 
     private static final float SPAN_EPSILON = 0.0001f;
 
-    /** Convenience overload that never aggregates. */
+    /** Convenience overload that never aggregates and draws no target band. */
     public ChartModel build(List<WeightEntry> all, ChartRange range, LocalDate today) {
         return build(all, range, today, NO_LIMIT);
+    }
+
+    /** Convenience overload without a target band. */
+    public ChartModel build(List<WeightEntry> all, ChartRange range, LocalDate today, int maxPoints) {
+        return build(all, range, today, maxPoints, WeightBounds.NONE);
     }
 
     /**
@@ -48,8 +53,11 @@ public class WeightStatisticsCalculator {
      *                  range holds more, they are averaged into that many time buckets.
      *                  Use {@link #NO_LIMIT} (or any value {@code <= 0}) to draw every
      *                  raw point.
+     * @param bounds    the user's target band; any set side is folded into the y-axis
+     *                  range so its reference line is always visible.
      */
-    public ChartModel build(List<WeightEntry> all, ChartRange range, LocalDate today, int maxPoints) {
+    public ChartModel build(List<WeightEntry> all, ChartRange range, LocalDate today,
+                            int maxPoints, WeightBounds bounds) {
         LocalDate start = range.isAll() ? null : today.minusDays(range.getDays() - 1L);
 
         List<WeightEntry> filtered = new ArrayList<>();
@@ -112,6 +120,17 @@ public class WeightStatisticsCalculator {
             displayMax = Math.max(displayMax, p.weightKg());
         }
 
+        // Fold any set target bound into the range so its reference line stays visible
+        // even when it lies outside the measured values.
+        if (bounds.hasLower()) {
+            displayMin = Math.min(displayMin, bounds.lowerKg());
+            displayMax = Math.max(displayMax, bounds.lowerKg());
+        }
+        if (bounds.hasUpper()) {
+            displayMin = Math.min(displayMin, bounds.upperKg());
+            displayMax = Math.max(displayMax, bounds.upperKg());
+        }
+
         float yMin;
         float yMax;
         float span = displayMax - displayMin;
@@ -131,7 +150,8 @@ public class WeightStatisticsCalculator {
         WeightStatistics stats = new WeightStatistics(
                 count, min, max, average, change, firstWeight, lastWeight, firstDate, lastDate);
 
-        return new ChartModel(points, yMin, yMax, xStart, xEnd, showMarkers, stats);
+        return new ChartModel(points, yMin, yMax, xStart, xEnd, showMarkers, stats,
+                bounds.lowerKg(), bounds.upperKg());
     }
 
     /**

@@ -39,6 +39,9 @@
     <string name="chart_content_description">Gewichtsverlauf %1$s: von %2$s kg am %3$s bis %4$s kg am %5$s, Veränderung %6$s kg.</string>
     <string name="chart_content_description_single">Gewichtsverlauf %1$s: ein Eintrag, %2$s kg am %3$s.</string>
     <string name="chart_content_description_empty">Gewichtsverlauf %1$s: keine Einträge.</string>
+    <string name="chart_target_both"> Zielbereich von %1$s bis %2$s kg.</string>
+    <string name="chart_target_lower"> Zieluntergrenze %1$s kg.</string>
+    <string name="chart_target_upper"> Zielobergrenze %1$s kg.</string>
 
     <!-- Settings screen -->
     <string name="action_settings">Einstellungen</string>
@@ -48,4 +51,8 @@
     <string name="theme_entry_system">Systemstandard</string>
     <string name="theme_entry_light">Hell</string>
     <string name="theme_entry_dark">Dunkel</string>
+    <string name="settings_category_chart">Diagramm</string>
+    <string name="settings_lower_bound_title">Gewichtsuntergrenze (kg)</string>
+    <string name="settings_upper_bound_title">Gewichtsobergrenze (kg)</string>
+    <string name="settings_bound_dialog_message">Als Ziellinie im Diagramm anzeigen. Leer lassen, um die Linie auszublenden.</string>
 </resources>

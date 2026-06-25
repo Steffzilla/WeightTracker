@@ -14,6 +14,7 @@ import de.steffzilla.weighttracker.data.WeightEntry;
 import de.steffzilla.weighttracker.data.WeightRepository;
 import de.steffzilla.weighttracker.stats.ChartModel;
 import de.steffzilla.weighttracker.stats.ChartRange;
+import de.steffzilla.weighttracker.stats.WeightBounds;
 import de.steffzilla.weighttracker.stats.WeightStatisticsCalculator;
 
 /**
@@ -35,6 +36,9 @@ public class StatisticsViewModel extends ViewModel {
 
     /** Point budget for the chart; refined once the view reports its real width. */
     private int maxPoints = WeightStatisticsCalculator.DEFAULT_MAX_POINTS;
+
+    /** User's target band; supplied by the Activity from preferences. */
+    private WeightBounds bounds = WeightBounds.NONE;
 
     public StatisticsViewModel(WeightRepository repository,
                                WeightStatisticsCalculator calculator,
@@ -72,6 +76,14 @@ public class StatisticsViewModel extends ViewModel {
         }
     }
 
+    /** Sets the target band drawn on the chart. Recomputes only when it changes. */
+    public void setBounds(WeightBounds bounds) {
+        if (!this.bounds.equals(bounds)) {
+            this.bounds = bounds;
+            recompute();
+        }
+    }
+
     private void recompute() {
         ChartRange range = selectedRange.getValue();
         if (range == null) {
@@ -81,6 +93,6 @@ public class StatisticsViewModel extends ViewModel {
         if (current == null) {
             current = Collections.emptyList();
         }
-        chartModel.setValue(calculator.build(current, range, today.get(), maxPoints));
+        chartModel.setValue(calculator.build(current, range, today.get(), maxPoints, bounds));
     }
 }

@@ -13,6 +13,8 @@
     <dimen name="chart_line_stroke">3dp</dimen>
     <dimen name="chart_grid_stroke">1dp</dimen>
     <dimen name="chart_marker_radius">3dp</dimen>
+    <dimen name="chart_bound_stroke">2dp</dimen>
+    <dimen name="chart_bound_dash">4dp</dimen>
     <dimen name="chart_label_gap">6dp</dimen>
     <dimen name="chart_label_text_size">12sp</dimen>
     <!-- Minimum horizontal spacing between drawn points; the chart width divided by

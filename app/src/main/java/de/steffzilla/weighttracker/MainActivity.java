@@ -20,6 +20,7 @@ import com.google.android.material.snackbar.Snackbar;
 
 import de.steffzilla.weighttracker.data.WeightEntry;
 import de.steffzilla.weighttracker.databinding.ActivityMainBinding;
+import de.steffzilla.weighttracker.settings.SettingsActivity;
 import de.steffzilla.weighttracker.ui.AddEditWeightBottomSheet;
 import de.steffzilla.weighttracker.ui.StatisticsActivity;
 import de.steffzilla.weighttracker.ui.WeightEntryAdapter;
@@ -57,6 +58,10 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.action_statistics) {
             startActivity(new Intent(this, StatisticsActivity.class));
+            return true;
+        }
+        if (item.getItemId() == R.id.action_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
             return true;
         }
         return super.onOptionsItemSelected(item);

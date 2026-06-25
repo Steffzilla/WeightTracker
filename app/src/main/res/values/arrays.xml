@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Theme options. Order must match theme_values. -->
+    <string-array name="theme_entries">
+        <item>@string/theme_entry_system</item>
+        <item>@string/theme_entry_light</item>
+        <item>@string/theme_entry_dark</item>
+    </string-array>
+
+    <!-- Persisted preference values; must match ThemeMode.value(). -->
+    <string-array name="theme_values" translatable="false">
+        <item>system</item>
+        <item>light</item>
+        <item>dark</item>
+    </string-array>
+</resources>

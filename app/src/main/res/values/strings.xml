@@ -39,4 +39,13 @@
     <string name="chart_content_description">Gewichtsverlauf %1$s: von %2$s kg am %3$s bis %4$s kg am %5$s, Veränderung %6$s kg.</string>
     <string name="chart_content_description_single">Gewichtsverlauf %1$s: ein Eintrag, %2$s kg am %3$s.</string>
     <string name="chart_content_description_empty">Gewichtsverlauf %1$s: keine Einträge.</string>
+
+    <!-- Settings screen -->
+    <string name="action_settings">Einstellungen</string>
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_category_appearance">Darstellung</string>
+    <string name="settings_theme_title">Design</string>
+    <string name="theme_entry_system">Systemstandard</string>
+    <string name="theme_entry_light">Hell</string>
+    <string name="theme_entry_dark">Dunkel</string>
 </resources>

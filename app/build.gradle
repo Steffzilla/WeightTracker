@@ -45,6 +45,7 @@ dependencies {
     implementation libs.lifecycle.livedata
     implementation libs.lifecycle.viewmodel
     implementation libs.recyclerview
+    implementation libs.preference
     annotationProcessor libs.room.compiler
     testImplementation libs.junit
     testImplementation libs.mockito.core

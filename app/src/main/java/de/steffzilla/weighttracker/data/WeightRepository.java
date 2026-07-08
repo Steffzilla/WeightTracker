@@ -17,6 +17,16 @@ public class WeightRepository {
         return dao.getAllEntries();
     }
 
+    /** Synchronous snapshot (newest first) for backup export/import; call off the UI thread. */
+    public List<WeightEntry> getAllEntriesSnapshot() {
+        return dao.getAllEntriesSnapshot();
+    }
+
+    /** Writes a validated set of imported entries in a single transaction. */
+    public void importEntries(List<WeightEntry> entries) {
+        dao.insertAll(entries);
+    }
+
     public long insert(WeightEntry entry) {
         return dao.insert(entry);
     }

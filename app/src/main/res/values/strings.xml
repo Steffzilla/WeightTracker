@@ -43,6 +43,40 @@
     <string name="chart_target_lower"> Zieluntergrenze %1$s kg.</string>
     <string name="chart_target_upper"> Zielobergrenze %1$s kg.</string>
 
+    <!-- Backup (import/export) screen -->
+    <string name="action_backup">Import/Export</string>
+    <string name="backup_title">Import/Export</string>
+    <string name="backup_description">Sichere alle Gewichtsdaten als CSV-Datei an einem Ort deiner Wahl (auch in der Cloud) und stelle sie bei Bedarf wieder her. Beim Import werden nur neue Datumswerte übernommen; gibt es zu einem Datum bereits einen abweichenden Wert, wird der Import abgebrochen.</string>
+    <string name="backup_export_button">Exportieren</string>
+    <string name="backup_import_button">Importieren</string>
+    <string name="backup_export_filename">gewichte_%1$s.csv</string>
+    <string name="backup_export_empty">Keine Daten zum Exportieren vorhanden.</string>
+    <string name="backup_export_failed">Export fehlgeschlagen.</string>
+    <string name="backup_import_empty">Die Datei enthält keine Einträge.</string>
+    <string name="backup_import_failed">Import fehlgeschlagen.</string>
+    <string name="backup_io_error">Datei konnte nicht geöffnet werden.</string>
+
+    <plurals name="backup_export_success">
+        <item quantity="one">%1$d Eintrag exportiert.</item>
+        <item quantity="other">%1$d Einträge exportiert.</item>
+    </plurals>
+    <plurals name="backup_import_success">
+        <item quantity="one">%1$d Eintrag importiert (%2$d bereits vorhanden).</item>
+        <item quantity="other">%1$d Einträge importiert (%2$d bereits vorhanden).</item>
+    </plurals>
+    <plurals name="backup_import_nothing_new">
+        <item quantity="one">Keine neuen Einträge – %1$d bereits vorhanden.</item>
+        <item quantity="other">Keine neuen Einträge – %1$d bereits vorhanden.</item>
+    </plurals>
+    <plurals name="backup_import_format_error">
+        <item quantity="one">Import abgebrochen: %1$d fehlerhafte Zeile.</item>
+        <item quantity="other">Import abgebrochen: %1$d fehlerhafte Zeilen.</item>
+    </plurals>
+    <plurals name="backup_import_collision">
+        <item quantity="one">Import abgebrochen: %1$d Konflikt mit vorhandenen Daten.</item>
+        <item quantity="other">Import abgebrochen: %1$d Konflikte mit vorhandenen Daten.</item>
+    </plurals>
+
     <!-- Settings screen -->
     <string name="action_settings">Einstellungen</string>
     <string name="settings_title">Einstellungen</string>

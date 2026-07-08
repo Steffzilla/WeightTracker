@@ -22,6 +22,7 @@ import de.steffzilla.weighttracker.data.WeightEntry;
 import de.steffzilla.weighttracker.databinding.ActivityMainBinding;
 import de.steffzilla.weighttracker.settings.SettingsActivity;
 import de.steffzilla.weighttracker.ui.AddEditWeightBottomSheet;
+import de.steffzilla.weighttracker.ui.BackupActivity;
 import de.steffzilla.weighttracker.ui.StatisticsActivity;
 import de.steffzilla.weighttracker.ui.WeightEntryAdapter;
 import de.steffzilla.weighttracker.ui.WeightViewModel;
@@ -58,6 +59,10 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.action_statistics) {
             startActivity(new Intent(this, StatisticsActivity.class));
+            return true;
+        }
+        if (item.getItemId() == R.id.action_backup) {
+            startActivity(new Intent(this, BackupActivity.class));
             return true;
         }
         if (item.getItemId() == R.id.action_settings) {

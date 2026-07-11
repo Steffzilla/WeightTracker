@@ -33,4 +33,5 @@ arch-core-testing = { group = "androidx.arch.core", name = "core-testing", versi
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+room = { id = "androidx.room", version.ref = "room" }
 

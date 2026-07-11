@@ -7,7 +7,7 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
 
-@Database(entities = {WeightEntry.class}, version = 1, exportSchema = false)
+@Database(entities = {WeightEntry.class}, version = 1)
 @TypeConverters({LocalDateConverter.class})
 public abstract class AppDatabase extends RoomDatabase {
 

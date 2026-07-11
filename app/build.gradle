@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.room)
 }
 
 android {
@@ -34,6 +35,12 @@ android {
     buildFeatures {
         viewBinding true
     }
+}
+
+// Exported schema JSONs (checked into version control) are the baseline against which
+// future Room Migrations are written and tested — never remove a version file.
+room {
+    schemaDirectory "$projectDir/schemas"
 }
 
 dependencies {

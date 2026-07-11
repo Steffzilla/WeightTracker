@@ -1,19 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+   Weight entries are health data and must not leave the device unencrypted, so the
+   Room database and the preferences (which include the target weight band) are
+   excluded from Google cloud backup. Device-to-device transfer stays at its
+   include-everything default: it copies directly to the new device without going
+   through Google's servers, so a phone migration keeps the data.
+   See https://developer.android.com/identity/data/autobackup
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
     </cloud-backup>
-    <!--
-    <device-transfer>
-        <include .../>
-        <exclude .../>
-    </device-transfer>
-    -->
 </data-extraction-rules>

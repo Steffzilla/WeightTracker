@@ -33,6 +33,8 @@ public class AddEditWeightBottomSheet extends BottomSheetDialogFragment {
     private static final String ARG_ENTRY_ID = "entry_id";
     private static final String ARG_ENTRY_DATE = "entry_date";
     private static final String ARG_ENTRY_WEIGHT = "entry_weight";
+    private static final String STATE_SELECTED_DATE = "state_selected_date";
+    private static final String DATE_PICKER_TAG = "datePicker";
 
     private static final DateTimeFormatter DATE_FORMATTER =
             DateTimeFormatter.ofPattern("dd.MM.yyyy");
@@ -97,8 +99,15 @@ public class AddEditWeightBottomSheet extends BottomSheetDialogFragment {
             binding.textTitle.setText(R.string.title_add_entry);
         }
 
+        // A date picked before a configuration change must win over the initial value
+        // from the arguments (edit) or today (add).
+        if (savedInstanceState != null && savedInstanceState.containsKey(STATE_SELECTED_DATE)) {
+            selectedDate = LocalDate.ofEpochDay(savedInstanceState.getLong(STATE_SELECTED_DATE));
+        }
+
         updateDateDisplay();
         setupDatePicker();
+        reattachDatePickerListener();
         binding.buttonSave.setOnClickListener(v -> onSaveClicked());
         binding.buttonCancel.setOnClickListener(v -> dismiss());
     }
@@ -109,7 +118,7 @@ public class AddEditWeightBottomSheet extends BottomSheetDialogFragment {
 
     private void setupDatePicker() {
         binding.editTextDate.setOnClickListener(v -> {
-            if (getParentFragmentManager().findFragmentByTag("datePicker") != null) return;
+            if (getParentFragmentManager().findFragmentByTag(DATE_PICKER_TAG) != null) return;
 
             long selectionMs = selectedDate.atStartOfDay(ZoneOffset.UTC)
                     .toInstant().toEpochMilli();
@@ -120,13 +129,30 @@ public class AddEditWeightBottomSheet extends BottomSheetDialogFragment {
                             .setValidator(DateValidatorPointBackward.now())
                             .build())
                     .build();
-            picker.addOnPositiveButtonClickListener(selection -> {
-                selectedDate = Instant.ofEpochMilli(selection)
-                        .atZone(ZoneOffset.UTC).toLocalDate();
-                updateDateDisplay();
-            });
-            picker.show(getParentFragmentManager(), "datePicker");
+            picker.addOnPositiveButtonClickListener(this::onDatePicked);
+            picker.show(getParentFragmentManager(), DATE_PICKER_TAG);
         });
+    }
+
+    /**
+     * Re-attaches the result listener to a date picker that survived a configuration
+     * change. The fragment manager restores the picker dialog itself, but not its
+     * listeners — without this, a date picked after e.g. a rotation would be silently
+     * discarded.
+     */
+    @SuppressWarnings("unchecked")
+    private void reattachDatePickerListener() {
+        var restored = (MaterialDatePicker<Long>)
+                getParentFragmentManager().findFragmentByTag(DATE_PICKER_TAG);
+        if (restored != null) {
+            restored.addOnPositiveButtonClickListener(this::onDatePicked);
+        }
+    }
+
+    private void onDatePicked(Long selection) {
+        selectedDate = Instant.ofEpochMilli(selection)
+                .atZone(ZoneOffset.UTC).toLocalDate();
+        updateDateDisplay();
     }
 
     private void onSaveClicked() {
@@ -179,6 +205,14 @@ public class AddEditWeightBottomSheet extends BottomSheetDialogFragment {
     private float parseWeight() {
         String raw = binding.editTextWeight.getText().toString().trim();
         return Float.parseFloat(raw.replace(',', '.'));
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (selectedDate != null) {
+            outState.putLong(STATE_SELECTED_DATE, selectedDate.toEpochDay());
+        }
     }
 
     @Override

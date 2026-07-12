@@ -21,11 +21,12 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // Stable release signing so app updates keep the same signature (a signature change
-    // forces uninstall and wipes the local database). The keystore and its credentials
-    // live OUTSIDE the repository in the user's ~/.gradle/gradle.properties
-    // (WEIGHTTRACKER_RELEASE_* properties); checkouts without them still build,
-    // producing an unsigned release APK.
+    // Stable signing so app updates keep the same signature (a signature change forces
+    // uninstall and wipes the local database). Applied to BOTH build types so day-to-day
+    // "Run" (debug) installs are machine-independent too. The keystore and its
+    // credentials live OUTSIDE the repository in the user's ~/.gradle/gradle.properties
+    // (WEIGHTTRACKER_RELEASE_* properties); checkouts without them still build, using
+    // the default per-machine debug key and an unsigned release APK.
     if (project.hasProperty('WEIGHTTRACKER_RELEASE_STORE_FILE')) {
         signingConfigs {
             release {
@@ -38,6 +39,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            if (project.hasProperty('WEIGHTTRACKER_RELEASE_STORE_FILE')) {
+                signingConfig signingConfigs.release
+            }
+        }
         release {
             optimization {
                 enable false

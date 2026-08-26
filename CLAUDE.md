@@ -30,11 +30,11 @@ Android weight-tracking app for logging daily body weight. Package: `de.steffzil
 - Dependency versions managed via `gradle/libs.versions.toml` (version catalog)
 - Configuration cache enabled (`gradle.properties`)
 
-**Current state:** Greenfield project — only a single `MainActivity` with a placeholder UI. No database, navigation, or architectural pattern is implemented yet.
+**Current state:** Working CRUD app on MVVM + Room. `MainActivity` shows the entry list (RecyclerView + FAB) with an Add/Edit bottom sheet and delete confirmation; `StatisticsActivity` shows a weight-trend chart. Data layer (`data/`), ViewModels (`ui/`) and pure statistics logic (`stats/`) are in place, with unit tests for the ViewModels and the statistics calculator.
 
 ## Architecture & Testability
 
-Follow the official Android Architecture Guide (MVVM / Production-ready architecture). Code testability is a primary requirement. Although this is a greenfield project, do not write monolithic code.
+Follow the official Android Architecture Guide (MVVM / Production-ready architecture). Code testability is a primary requirement. Do not write monolithic code.
 
 - **Separation of Concerns**: Strictly separate UI (Activities/Fragments), Presentation Logic (ViewModels), and Data (Repositories/Room DAOs).
 - **Dependency Injection (DI)**: Do not hardcode dependencies. Design all classes (ViewModels, Repositories) using **Constructor Injection** so they can be easily mocked in Unit Tests.
@@ -45,6 +45,29 @@ Key paths:
 - `app/src/main/java/de/steffzilla/weighttracker/` — all source code
 - `app/src/main/res/` — layouts, themes, XML configs
 - `app/src/main/keepRules/rules.keep` — ProGuard/R8 keep rules (add entries here, not inline)
+
+## Charts & Statistics
+
+The statistics/trend screen follows a strict "dumb view + pure calculator" split:
+
+- **No charting library.** Charts are drawn in a custom `View` on a `Canvas`
+  (`ui/WeightChartView`). MPAndroidChart (unmaintained since 2019) and Vico
+  (Compose-centric) were both rejected against the third-party policy. Do not add a
+  charting dependency without re-checking that policy.
+- **Pure logic in `stats/`.** All filtering, aggregation and chart-model preparation
+  live in framework-free Java (`WeightStatisticsCalculator` → immutable `ChartModel` /
+  `WeightStatistics` records). `today` is passed in, never read from the clock inside
+  the calculator, so range logic is deterministically unit-testable. Put new
+  computation here and unit-test it — keep it out of the View and the Activity.
+- **The View only renders.** `WeightChartView.setModel(ChartModel)` takes a fully
+  prepared model and draws it. No data access, filtering or formatting decisions in
+  `onDraw`. Resolve colors from Material 3 theme attributes (`MaterialColors.getColor`),
+  never hardcode them, and size text from `sp` dimens for font scaling.
+- **Chart accessibility.** A `Canvas` is invisible to TalkBack, so the Activity sets a
+  spoken summary via `setContentDescription` on the chart view (value range, dates,
+  net change) whenever the model changes.
+- **Y-axis is never zero-based.** Scale to the data's min/max with padding; handle the
+  degenerate all-equal/single-point case with a fixed fallback span.
 
 ## Testing Strategy
 

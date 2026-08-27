@@ -20,7 +20,7 @@ public final class ThirdPartyLibraries {
             new ThirdPartyLibrary("AndroidX Activity", "1.8.0", "Apache-2.0"),
             new ThirdPartyLibrary("AndroidX ConstraintLayout", "2.1.4", "Apache-2.0"),
             new ThirdPartyLibrary("AndroidX RecyclerView", "1.3.2", "Apache-2.0"),
-            new ThirdPartyLibrary("AndroidX Room", "2.6.1", "Apache-2.0"),
+            new ThirdPartyLibrary("AndroidX Room", "2.7.2", "Apache-2.0"),
             new ThirdPartyLibrary("AndroidX Lifecycle", "2.8.7", "Apache-2.0"),
             new ThirdPartyLibrary("AndroidX Preference", "1.2.1", "Apache-2.0"),
             new ThirdPartyLibrary("Material Components for Android", "1.10.0", "Apache-2.0"));

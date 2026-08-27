@@ -3,6 +3,15 @@ plugins {
     alias(libs.plugins.room)
 }
 
+// The JDK that compiles the sources, runs javadoc and runs the unit tests. Declared explicitly
+// (Google's recommendation) so it does not silently follow whichever JVM happens to run Gradle.
+// Keep in step with gradle/gradle-daemon-jvm.properties.
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
 android {
     namespace 'de.steffzilla.weighttracker'
     compileSdk {
@@ -53,9 +62,12 @@ android {
             }
         }
     }
+    // Java language level for the app's source and the emitted bytecode. Java 21 is the newest
+    // LTS this project can use: the Kotlin compiler bundled with AGP 9 accepts jvmTarget up to 24
+    // only, so Java 25 is rejected even though no Kotlin source exists here.
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
     }
     buildFeatures {
         viewBinding true

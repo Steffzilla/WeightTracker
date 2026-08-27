@@ -72,6 +72,16 @@ android {
     buildFeatures {
         viewBinding true
     }
+    // Lint runs before every commit (see CLAUDE.md Build Commands). Errors break the build;
+    // warnings are read in the report and not promoted, because GradleDependency stays
+    // deliberately enabled as the dependency radar — a new upstream release must not turn the
+    // build red on its own. No baseline: findings that are judged false positives get a
+    // tools:ignore with the reasoning at the place it applies, so the report stays short
+    // enough to read every time.
+    lint {
+        abortOnError = true
+        warningsAsErrors = false
+    }
 }
 
 // Exported schema JSONs (checked into version control) are the baseline against which

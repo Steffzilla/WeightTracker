@@ -4,11 +4,13 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import java.io.Closeable;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 
 import de.steffzilla.weighttracker.R;
@@ -22,11 +24,12 @@ import de.steffzilla.weighttracker.data.WeightRepository;
 import de.steffzilla.weighttracker.util.Event;
 
 /**
- * Orchestrates CSV export/import off the UI thread. The Activity resolves the
- * user-picked Storage Access Framework document to a stream and hands it over; this
- * ViewModel takes ownership of the stream (closing it when done), runs the pure
- * {@link WeightCsvCodec}/{@link ImportPlanner} logic and the Room writes, and posts a
- * one-shot {@link BackupMessage} describing the outcome.
+ * Orchestrates CSV export/import off the UI thread. The Activity hands over a
+ * {@link Callable} that opens the user-picked Storage Access Framework document; opening
+ * it can block for seconds on a cloud provider, so it happens on the executor like
+ * everything else here. This ViewModel takes ownership of the stream (closing it when
+ * done), runs the pure {@link WeightCsvCodec}/{@link ImportPlanner} logic and the Room
+ * writes, and posts a one-shot {@link BackupMessage} describing the outcome.
  *
  * <p>Import is all-or-nothing: if any line is malformed, or any date already exists with
  * a different weight, nothing is written. Rows whose date and weight already match an
@@ -50,10 +53,14 @@ public class BackupViewModel extends ViewModel {
         return message;
     }
 
-    /** Writes all entries (newest first) to the stream as CSV, then closes the stream. */
-    public void export(OutputStream out) {
+    /** Writes all entries (newest first) as CSV to the opened document, then closes it. */
+    public void export(Callable<OutputStream> opener) {
         executor.execute(() -> {
-            try (OutputStream os = out) {
+            OutputStream opened = open(opener);
+            if (opened == null) {
+                return;
+            }
+            try (OutputStream os = opened) {
                 List<WeightEntry> all = repository.getAllEntriesSnapshot();
                 if (all.isEmpty()) {
                     post(BackupMessage.plain(R.string.backup_export_empty));
@@ -68,10 +75,14 @@ public class BackupViewModel extends ViewModel {
         });
     }
 
-    /** Validates and (only if fully valid) imports CSV from the stream, then closes it. */
-    public void importFrom(InputStream in) {
+    /** Validates and (only if fully valid) imports CSV from the opened document, then closes it. */
+    public void importFrom(Callable<InputStream> opener) {
         executor.execute(() -> {
-            try (InputStream is = in) {
+            InputStream opened = open(opener);
+            if (opened == null) {
+                return;
+            }
+            try (InputStream is = opened) {
                 String content = new String(is.readAllBytes(), StandardCharsets.UTF_8);
                 ImportResult parsed = codec.decode(content);
                 if (parsed.hasErrors()) {
@@ -108,6 +119,25 @@ public class BackupViewModel extends ViewModel {
                 post(BackupMessage.plain(R.string.backup_import_failed));
             }
         });
+    }
+
+    /**
+     * Opens the picked document on the calling (background) thread, or reports that it
+     * could not be opened and returns {@code null}. A provider that throws and one that
+     * hands back no stream are the same failure to the user, and a different one from a
+     * malformed file or a failed write.
+     */
+    private <T extends Closeable> T open(Callable<T> opener) {
+        try {
+            T stream = opener.call();
+            if (stream != null) {
+                return stream;
+            }
+        } catch (Exception e) {
+            // fall through to the same message as a null stream
+        }
+        post(BackupMessage.plain(R.string.backup_io_error));
+        return null;
     }
 
     private void post(BackupMessage msg) {

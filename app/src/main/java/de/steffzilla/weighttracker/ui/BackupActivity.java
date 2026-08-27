@@ -1,5 +1,6 @@
 package de.steffzilla.weighttracker.ui;
 
+import android.content.ContentResolver;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -14,8 +15,6 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.snackbar.Snackbar;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.time.LocalDate;
 
 import de.steffzilla.weighttracker.R;
@@ -24,9 +23,9 @@ import de.steffzilla.weighttracker.databinding.ActivityBackupBinding;
 /**
  * Lets the user export all weight entries to a CSV file and import them back via the
  * Storage Access Framework (system file picker, including cloud providers). All data
- * work runs in {@link BackupViewModel}; this Activity only resolves the picked document
- * to a stream, wires the SAF launchers to the buttons, and shows the outcome as a
- * Snackbar.
+ * work runs in {@link BackupViewModel}; this Activity only wires the SAF launchers to the
+ * buttons, hands the ViewModel a way to open the picked document, and shows the outcome
+ * as a Snackbar.
  */
 public class BackupActivity extends AppCompatActivity {
 
@@ -82,34 +81,16 @@ public class BackupActivity extends AppCompatActivity {
 
     private void onExportLocationChosen(Uri uri) {
         if (uri == null) return; // user cancelled the picker
-        try {
-            OutputStream os = getContentResolver().openOutputStream(uri);
-            if (os == null) {
-                showIoError();
-                return;
-            }
-            viewModel.export(os);
-        } catch (Exception e) {
-            showIoError();
-        }
+        // The application's resolver, not the Activity's: opening runs on a background
+        // thread that may outlive this screen.
+        ContentResolver resolver = getApplicationContext().getContentResolver();
+        viewModel.export(() -> resolver.openOutputStream(uri));
     }
 
     private void onImportFileChosen(Uri uri) {
         if (uri == null) return; // user cancelled the picker
-        try {
-            InputStream is = getContentResolver().openInputStream(uri);
-            if (is == null) {
-                showIoError();
-                return;
-            }
-            viewModel.importFrom(is);
-        } catch (Exception e) {
-            showIoError();
-        }
-    }
-
-    private void showIoError() {
-        Snackbar.make(binding.getRoot(), R.string.backup_io_error, Snackbar.LENGTH_LONG).show();
+        ContentResolver resolver = getApplicationContext().getContentResolver();
+        viewModel.importFrom(() -> resolver.openInputStream(uri));
     }
 
     private String defaultExportName() {

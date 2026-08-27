@@ -1,6 +1,7 @@
 package de.steffzilla.weighttracker.ui;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -21,10 +22,15 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
 
 import de.steffzilla.weighttracker.R;
 import de.steffzilla.weighttracker.data.WeightEntry;
@@ -53,8 +59,8 @@ public class BackupViewModelTest {
         return viewModel.getMessage().getValue().peekContent();
     }
 
-    private ByteArrayInputStream csv(String content) {
-        return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
+    private Callable<InputStream> csv(String content) {
+        return () -> new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
     }
 
     // ---- export ----
@@ -64,7 +70,7 @@ public class BackupViewModelTest {
         when(repository.getAllEntriesSnapshot()).thenReturn(Collections.emptyList());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        viewModel.export(out);
+        viewModel.export(() -> out);
 
         assertEquals(R.string.backup_export_empty, lastMessage().resId());
         assertEquals(0, out.size());
@@ -77,7 +83,7 @@ public class BackupViewModelTest {
                 new WeightEntry(LocalDate.of(2026, 1, 2), 79.5f)));
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        viewModel.export(out);
+        viewModel.export(() -> out);
 
         String written = out.toString(StandardCharsets.UTF_8);
         assertTrue(written.startsWith("date,weight_kg"));
@@ -137,5 +143,94 @@ public class BackupViewModelTest {
 
         assertEquals(R.string.backup_import_empty, lastMessage().resId());
         verify(repository, never()).importEntries(any());
+    }
+
+    // ---- opening the document ----
+
+    @Test
+    public void export_openerFails_reportsIoError() {
+        viewModel.export(() -> {
+            throw new IOException("provider unavailable");
+        });
+
+        assertEquals(R.string.backup_io_error, lastMessage().resId());
+    }
+
+    @Test
+    public void import_openerFails_reportsIoError() {
+        viewModel.importFrom(() -> {
+            throw new IOException("provider unavailable");
+        });
+
+        assertEquals(R.string.backup_io_error, lastMessage().resId());
+        verify(repository, never()).importEntries(anyList());
+    }
+
+    @Test
+    public void export_openerReturnsNull_reportsIoError() {
+        viewModel.export(() -> null);
+
+        assertEquals(R.string.backup_io_error, lastMessage().resId());
+    }
+
+    @Test
+    public void import_openerReturnsNull_reportsIoError() {
+        viewModel.importFrom(() -> null);
+
+        assertEquals(R.string.backup_io_error, lastMessage().resId());
+        verify(repository, never()).importEntries(anyList());
+    }
+
+    /**
+     * Opening a Storage Access Framework document can block for seconds on a cloud
+     * provider, so it must happen on the executor and not on the caller's (UI) thread.
+     */
+    @Test
+    public void export_opensTheDocumentOnTheExecutor() {
+        var pending = new DeferredExecutor();
+        boolean[] opened = {false};
+
+        pending.viewModel().export(() -> {
+            opened[0] = true;
+            return new ByteArrayOutputStream();
+        });
+
+        assertFalse("document was opened on the calling thread", opened[0]);
+        pending.runAll();
+        assertTrue(opened[0]);
+    }
+
+    @Test
+    public void import_opensTheDocumentOnTheExecutor() {
+        var pending = new DeferredExecutor();
+        boolean[] opened = {false};
+
+        pending.viewModel().importFrom(() -> {
+            opened[0] = true;
+            return new ByteArrayInputStream(new byte[0]);
+        });
+
+        assertFalse("document was opened on the calling thread", opened[0]);
+        pending.runAll();
+        assertTrue(opened[0]);
+    }
+
+    /** Queues submitted work instead of running it, so "not yet on the executor" is observable. */
+    private final class DeferredExecutor implements Executor {
+        private final List<Runnable> queued = new ArrayList<>();
+        private final BackupViewModel viewModel = new BackupViewModel(repository, this);
+
+        @Override
+        public void execute(Runnable command) {
+            queued.add(command);
+        }
+
+        BackupViewModel viewModel() {
+            return viewModel;
+        }
+
+        void runAll() {
+            queued.forEach(Runnable::run);
+        }
     }
 }

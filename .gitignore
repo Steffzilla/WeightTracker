@@ -8,19 +8,9 @@
 
 # Local configuration (Contains SDK paths / API Keys)
 local.properties
-.idea/caches
-.idea/libraries
 
-# Android Studio / IntelliJ personal settings
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/navEditor.xml
-.idea/assetWizardSettings.xml
-.idea/modules.xml
-.idea/deploymentTargetSelector.xml
-.idea/markdown.xml
-.idea/vcs.xml
-.idea/runConfigurations.xml
+# Android Studio / IntelliJ project and personal settings
+.idea/
 
 # OS generated files
 .DS_Store
@@ -30,4 +20,5 @@ Thumbs.db
 *.log
 
 # Claude Code session data
+.claude/
 .claudecode/

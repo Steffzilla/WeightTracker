@@ -1,5 +1,6 @@
 package de.steffzilla.weighttracker.ui;
 
+import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -36,6 +37,19 @@ import de.steffzilla.weighttracker.util.Event;
  * existing entry are silently skipped as no-ops.
  */
 public class BackupViewModel extends ViewModel {
+
+    /**
+     * Upper bound for an imported file, in the unit the error message names. The whole
+     * file is read into memory and validated before anything is written, so without a
+     * limit a large pick would end the process with an OutOfMemoryError instead of an
+     * error message — bounding the read is the only reliable defence, since an Error
+     * cannot be handled meaningfully once it is thrown. A CSV row is ~16 bytes, so this
+     * still covers far more days than a lifetime of daily entries.
+     */
+    private static final int MAX_IMPORT_MEGABYTES = 5;
+
+    @VisibleForTesting
+    static final int MAX_IMPORT_BYTES = MAX_IMPORT_MEGABYTES * 1024 * 1024;
 
     private final WeightRepository repository;
     private final Executor executor;
@@ -83,7 +97,14 @@ public class BackupViewModel extends ViewModel {
                 return;
             }
             try (InputStream is = opened) {
-                String content = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                // Reading one byte past the limit tells "at the limit" from "too large".
+                byte[] bytes = is.readNBytes(MAX_IMPORT_BYTES + 1);
+                if (bytes.length > MAX_IMPORT_BYTES) {
+                    post(BackupMessage.plain(R.string.backup_import_too_large,
+                            MAX_IMPORT_MEGABYTES));
+                    return;
+                }
+                String content = new String(bytes, StandardCharsets.UTF_8);
                 ImportResult parsed = codec.decode(content);
                 if (parsed.hasErrors()) {
                     post(BackupMessage.quantity(R.plurals.backup_import_format_error,

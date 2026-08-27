@@ -54,6 +54,7 @@
     <string name="backup_export_failed">Export fehlgeschlagen.</string>
     <string name="backup_import_empty">Die Datei enthält keine Einträge.</string>
     <string name="backup_import_failed">Import fehlgeschlagen.</string>
+    <string name="backup_import_too_large">Die Datei ist größer als %1$d MB und wurde nicht importiert.</string>
     <string name="backup_io_error">Datei konnte nicht geöffnet werden.</string>
 
     <plurals name="backup_export_success">

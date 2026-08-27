@@ -145,6 +145,40 @@ public class BackupViewModelTest {
         verify(repository, never()).importEntries(any());
     }
 
+    // ---- size cap ----
+
+    @Test
+    public void import_oversizedFile_reportsTooLargeAndDoesNotWrite() {
+        viewModel.importFrom(() -> filler(BackupViewModel.MAX_IMPORT_BYTES + 1));
+
+        assertEquals(R.string.backup_import_too_large, lastMessage().resId());
+        verify(repository, never()).importEntries(anyList());
+    }
+
+    @Test
+    public void import_fileExactlyAtTheLimit_isStillRead() {
+        when(repository.getAllEntriesSnapshot()).thenReturn(Collections.emptyList());
+        String row = "2026-01-02,79.0\n";
+        String padding = " \n".repeat((BackupViewModel.MAX_IMPORT_BYTES - row.length()) / 2);
+
+        viewModel.importFrom(csv(row + padding));
+
+        verify(repository).importEntries(entriesCaptor.capture());
+        assertEquals(1, entriesCaptor.getValue().size());
+    }
+
+    /** A stream of {@code size} blank-line bytes, without materialising it as an array. */
+    private InputStream filler(int size) {
+        return new InputStream() {
+            private int remaining = size;
+
+            @Override
+            public int read() {
+                return remaining-- > 0 ? '\n' : -1;
+            }
+        };
+    }
+
     // ---- opening the document ----
 
     @Test

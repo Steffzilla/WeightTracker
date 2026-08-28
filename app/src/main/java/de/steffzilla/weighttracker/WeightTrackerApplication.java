@@ -9,15 +9,25 @@ import androidx.preference.PreferenceManager;
 import de.steffzilla.weighttracker.settings.ThemeMode;
 
 /**
- * Applies the persisted theme preference before any activity is created, so the chosen
- * light/dark mode is in effect from the first frame. The thin framework mapping lives
- * here; the value-to-enum resolution it relies on is unit-tested in {@link ThemeMode}.
+ * Owns the {@link AppContainer} and applies the persisted theme preference before any
+ * activity is created, so the chosen light/dark mode is in effect from the first frame.
+ * The thin framework mapping lives here; the value-to-enum resolution it relies on is
+ * unit-tested in {@link ThemeMode}.
  */
 public class WeightTrackerApplication extends Application {
+
+    private AppContainer container;
+
+    /** The app's composition root; reached by screens via {@code ViewModelFactory.from}. */
+    public AppContainer container() {
+        return container;
+    }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        container = new AppContainer(this);
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String value = prefs.getString(ThemeMode.PREF_KEY, ThemeMode.SYSTEM.value());
         AppCompatDelegate.setDefaultNightMode(nightModeFor(ThemeMode.fromValue(value)));

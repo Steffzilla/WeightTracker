@@ -92,7 +92,7 @@ public class StatisticsActivity extends AppCompatActivity {
     }
 
     private void setupViewModel() {
-        viewModel = new ViewModelProvider(this, new StatisticsViewModelFactory(this))
+        viewModel = new ViewModelProvider(this, ViewModelFactory.from(this))
                 .get(StatisticsViewModel.class);
 
         viewModel.getSelectedRange().observe(this, range -> {

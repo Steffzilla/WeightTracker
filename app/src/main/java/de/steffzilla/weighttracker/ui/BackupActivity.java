@@ -66,7 +66,7 @@ public class BackupActivity extends AppCompatActivity {
     }
 
     private void setupViewModel() {
-        viewModel = new ViewModelProvider(this, new BackupViewModelFactory(this))
+        viewModel = new ViewModelProvider(this, ViewModelFactory.from(this))
                 .get(BackupViewModel.class);
         viewModel.getMessage().observe(this, event -> {
             BackupMessage msg = event.getContentIfNotConsumed();

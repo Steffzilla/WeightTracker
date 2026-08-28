@@ -41,10 +41,9 @@ public class WeightRepository {
      *
      * @return {@code false} if the write violated a constraint. The unique index on
      *         {@code date} is the only one an entry built by the app can hit, so this
-     *         means the date is taken. Callers check {@link #existsForDate} first, but
-     *         nothing holds the date between that check and this write — a CSV import
-     *         runs on its own thread and can claim it in between, and rejecting the entry
-     *         is what the user would have been told anyway.
+     *         means the date is taken. Callers check {@link #existsForDate} first; the
+     *         index is the backstop that keeps a writer racing them from becoming a
+     *         crash, and rejecting the entry is what the user would have been told anyway.
      */
     public boolean insert(WeightEntry entry) {
         try {

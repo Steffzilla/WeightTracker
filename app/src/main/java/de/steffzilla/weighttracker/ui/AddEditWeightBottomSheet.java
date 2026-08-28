@@ -73,7 +73,7 @@ public class AddEditWeightBottomSheet extends BottomSheetDialogFragment {
         super.onViewCreated(view, savedInstanceState);
 
         viewModel = new ViewModelProvider(requireActivity(),
-                new WeightViewModelFactory(requireContext()))
+                ViewModelFactory.from(requireContext()))
                 .get(WeightViewModel.class);
 
         // numberDecimal's default key listener only accepts '.'; allow the

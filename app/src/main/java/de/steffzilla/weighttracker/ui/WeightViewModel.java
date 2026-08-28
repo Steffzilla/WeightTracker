@@ -45,9 +45,9 @@ public class WeightViewModel extends ViewModel {
                 postMessage(R.string.error_date_duplicate);
                 return;
             }
-            // Nothing holds the date between the check above and this write: a CSV import
-            // runs on its own thread and can claim it in between, and then the unique
-            // index is what decides.
+            // Every database write shares one executor, so as it stands nothing can claim
+            // the date between the check above and this write. The unique index still has
+            // the last word, and keeps a second writer from ever becoming a crash.
             if (!repository.insert(new WeightEntry(date, weightKg))) {
                 postMessage(R.string.error_date_duplicate);
             }

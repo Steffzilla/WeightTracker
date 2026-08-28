@@ -25,9 +25,9 @@ import de.steffzilla.weighttracker.ui.AboutActivity;
 import de.steffzilla.weighttracker.ui.AddEditWeightBottomSheet;
 import de.steffzilla.weighttracker.ui.BackupActivity;
 import de.steffzilla.weighttracker.ui.StatisticsActivity;
+import de.steffzilla.weighttracker.ui.ViewModelFactory;
 import de.steffzilla.weighttracker.ui.WeightEntryAdapter;
 import de.steffzilla.weighttracker.ui.WeightViewModel;
-import de.steffzilla.weighttracker.ui.WeightViewModelFactory;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupViewModel() {
-        viewModel = new ViewModelProvider(this, new WeightViewModelFactory(this))
+        viewModel = new ViewModelProvider(this, ViewModelFactory.from(this))
                 .get(WeightViewModel.class);
         viewModel.getAllEntries().observe(this, adapter::setEntries);
         viewModel.getUserMessage().observe(this, event -> {

@@ -74,9 +74,9 @@ public class WeightViewModelTest {
     }
 
     /**
-     * The date was free at the check but taken by the time of the write — a CSV import
-     * runs on its own thread. The unique index rejects the row and the user is told the
-     * same thing as on the expected path, instead of the app dying on the executor.
+     * The defensive path: the unique index rejected the row even though the check said the
+     * date was free. All writes share one executor, so this is not reachable as things
+     * stand — it is what keeps a second writer from ever becoming a crash.
      */
     @Test
     public void addEntry_dateTakenBetweenCheckAndInsert_postsError() {

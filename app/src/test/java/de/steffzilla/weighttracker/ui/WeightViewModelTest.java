@@ -58,6 +58,7 @@ public class WeightViewModelTest {
     public void addEntry_validData_insertsEntry() {
         LocalDate today = LocalDate.now();
         when(repository.existsForDate(today)).thenReturn(false);
+        when(repository.insert(any())).thenReturn(true);
         viewModel.addEntry(today, 84.5f);
         verify(repository).insert(argThat(e ->
                 e.getDate().equals(today) && e.getWeightKg() == 84.5f));
@@ -67,8 +68,23 @@ public class WeightViewModelTest {
     public void addEntry_validData_noErrorMessage() {
         LocalDate today = LocalDate.now();
         when(repository.existsForDate(today)).thenReturn(false);
+        when(repository.insert(any())).thenReturn(true);
         viewModel.addEntry(today, 84.5f);
         assertNull(viewModel.getUserMessage().getValue());
+    }
+
+    /**
+     * The date was free at the check but taken by the time of the write — a CSV import
+     * runs on its own thread. The unique index rejects the row and the user is told the
+     * same thing as on the expected path, instead of the app dying on the executor.
+     */
+    @Test
+    public void addEntry_dateTakenBetweenCheckAndInsert_postsError() {
+        LocalDate today = LocalDate.now();
+        when(repository.existsForDate(today)).thenReturn(false);
+        when(repository.insert(any())).thenReturn(false);
+        viewModel.addEntry(today, 84.5f);
+        assertNotNull(viewModel.getUserMessage().getValue().getContentIfNotConsumed());
     }
 
     @Test
@@ -88,8 +104,21 @@ public class WeightViewModelTest {
         WeightEntry entry = new WeightEntry(date, 80.0f);
         entry.setId(1L);
         when(repository.existsForDateExcluding(date, 1L)).thenReturn(false);
+        when(repository.update(entry)).thenReturn(true);
         viewModel.updateEntry(entry);
         verify(repository).update(entry);
+        assertNull(viewModel.getUserMessage().getValue());
+    }
+
+    @Test
+    public void updateEntry_dateTakenBetweenCheckAndUpdate_postsError() {
+        LocalDate date = LocalDate.now().minusDays(1);
+        WeightEntry entry = new WeightEntry(date, 80.0f);
+        entry.setId(1L);
+        when(repository.existsForDateExcluding(date, 1L)).thenReturn(false);
+        when(repository.update(entry)).thenReturn(false);
+        viewModel.updateEntry(entry);
+        assertNotNull(viewModel.getUserMessage().getValue().getContentIfNotConsumed());
     }
 
     @Test

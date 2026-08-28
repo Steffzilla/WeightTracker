@@ -45,7 +45,12 @@ public class WeightViewModel extends ViewModel {
                 postMessage(R.string.error_date_duplicate);
                 return;
             }
-            repository.insert(new WeightEntry(date, weightKg));
+            // Nothing holds the date between the check above and this write: a CSV import
+            // runs on its own thread and can claim it in between, and then the unique
+            // index is what decides.
+            if (!repository.insert(new WeightEntry(date, weightKg))) {
+                postMessage(R.string.error_date_duplicate);
+            }
         });
     }
 
@@ -55,7 +60,9 @@ public class WeightViewModel extends ViewModel {
                 postMessage(R.string.error_date_duplicate);
                 return;
             }
-            repository.update(entry);
+            if (!repository.update(entry)) {
+                postMessage(R.string.error_date_duplicate);
+            }
         });
     }
 

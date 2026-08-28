@@ -10,6 +10,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 
 import static org.hamcrest.Matchers.allOf;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 import android.os.SystemClock;
@@ -24,10 +25,12 @@ import org.junit.runner.RunWith;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import de.steffzilla.weighttracker.MainActivity;
 import de.steffzilla.weighttracker.R;
 import de.steffzilla.weighttracker.data.AppDatabase;
+import de.steffzilla.weighttracker.data.WeightEntry;
 
 /**
  * Guards the add/edit sheet against configuration changes (simulated via
@@ -71,8 +74,9 @@ public class AddEditDatePickerRecreateTest {
             scenario.recreate();
 
             onView(withId(R.id.buttonSave)).perform(click());
-            // The entry must land on the picked date, not on today.
-            waitForDisplayed(firstOfMonth);
+            // The entry must land on the picked date, not on today. Asserted against the
+            // database rather than the list, because saving now opens the trend screen.
+            waitForStoredDate(LocalDate.now().withDayOfMonth(1));
         }
     }
 
@@ -97,22 +101,24 @@ public class AddEditDatePickerRecreateTest {
     }
 
     /**
-     * Retries until a view with {@code text} is on screen. Needed after saving because
-     * the Room write runs on the ViewModel's executor, which Espresso does not
-     * synchronize with.
+     * Retries until exactly one entry is stored and it carries {@code expected}. Polling is
+     * needed because the Room write runs on the ViewModel's executor, which Espresso does
+     * not synchronize with.
      */
-    private static void waitForDisplayed(String text) {
+    private static void waitForStoredDate(LocalDate expected) {
+        var dao = AppDatabase.getInstance(ApplicationProvider.getApplicationContext())
+                .weightDao();
         long deadline = SystemClock.uptimeMillis() + 5000;
         while (true) {
-            try {
-                onView(withText(text)).check(matches(isCompletelyDisplayed()));
+            List<WeightEntry> stored = dao.getAllEntriesSnapshot();
+            if (stored.size() == 1 && stored.get(0).getDate().equals(expected)) {
                 return;
-            } catch (Throwable t) {
-                if (SystemClock.uptimeMillis() > deadline) {
-                    throw t;
-                }
-                SystemClock.sleep(100);
             }
+            if (SystemClock.uptimeMillis() > deadline) {
+                fail("expected a single entry on " + expected + ", stored: " + stored.stream()
+                        .map(WeightEntry::getDate).toList());
+            }
+            SystemClock.sleep(100);
         }
     }
 }

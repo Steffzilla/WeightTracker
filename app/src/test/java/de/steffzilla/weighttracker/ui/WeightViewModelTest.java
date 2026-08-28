@@ -152,6 +152,70 @@ public class WeightViewModelTest {
         assertNotNull(viewModel.getUserMessage().getValue().getContentIfNotConsumed());
     }
 
+    // ---- "entry added", the signal the entry list navigates on ----
+
+    @Test
+    public void addEntry_storedEntry_announcesIt() {
+        when(repository.existsForDate(TODAY)).thenReturn(false);
+        when(repository.insert(any())).thenReturn(true);
+
+        viewModel.addEntry(TODAY, 84.5f);
+
+        assertNotNull(viewModel.getEntryAdded().getValue().getContentIfNotConsumed());
+    }
+
+    @Test
+    public void addEntry_futureDate_announcesNothing() {
+        viewModel.addEntry(TODAY.plusDays(1), 84.5f);
+
+        assertNull(viewModel.getEntryAdded().getValue());
+    }
+
+    @Test
+    public void addEntry_duplicateDate_announcesNothing() {
+        when(repository.existsForDate(TODAY)).thenReturn(true);
+
+        viewModel.addEntry(TODAY, 84.5f);
+
+        assertNull(viewModel.getEntryAdded().getValue());
+    }
+
+    /** A rejected write must not look like a stored entry either. */
+    @Test
+    public void addEntry_insertRejected_announcesNothing() {
+        when(repository.existsForDate(TODAY)).thenReturn(false);
+        when(repository.insert(any())).thenReturn(false);
+
+        viewModel.addEntry(TODAY, 84.5f);
+
+        assertNull(viewModel.getEntryAdded().getValue());
+    }
+
+    /** Correcting an existing entry is not capturing a new measurement. */
+    @Test
+    public void updateEntry_announcesNothing() {
+        WeightEntry entry = new WeightEntry(TODAY.minusDays(1), 80.0f);
+        entry.setId(1L);
+        when(repository.existsForDateExcluding(entry.getDate(), 1L)).thenReturn(false);
+        when(repository.update(entry)).thenReturn(true);
+
+        viewModel.updateEntry(entry);
+
+        assertNull(viewModel.getEntryAdded().getValue());
+    }
+
+    /** Consumed once, so returning from the trend screen must not send you back to it. */
+    @Test
+    public void entryAdded_isConsumedOnlyOnce() {
+        when(repository.existsForDate(TODAY)).thenReturn(false);
+        when(repository.insert(any())).thenReturn(true);
+        viewModel.addEntry(TODAY, 84.5f);
+
+        viewModel.getEntryAdded().getValue().getContentIfNotConsumed();
+
+        assertNull(viewModel.getEntryAdded().getValue().getContentIfNotConsumed());
+    }
+
     @Test
     public void deleteEntry_callsRepositoryDelete() {
         WeightEntry entry = new WeightEntry(TODAY.minusDays(1), 80.0f);

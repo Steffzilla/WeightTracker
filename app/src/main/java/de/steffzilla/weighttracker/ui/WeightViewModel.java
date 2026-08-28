@@ -22,6 +22,7 @@ public class WeightViewModel extends ViewModel {
     private final Supplier<LocalDate> today;
 
     private final MutableLiveData<Event<Integer>> userMessage = new MutableLiveData<>();
+    private final MutableLiveData<Event<Boolean>> entryAdded = new MutableLiveData<>();
 
     public WeightViewModel(WeightRepository repository, Executor executor,
                            Supplier<LocalDate> today) {
@@ -39,6 +40,18 @@ public class WeightViewModel extends ViewModel {
         return userMessage;
     }
 
+    /**
+     * Signals that a new entry is actually in the database. Editing an existing entry does
+     * not signal — only capturing a fresh measurement does.
+     *
+     * <p>Deliberately not fired when the save is merely requested: the write happens on
+     * the executor and can still be rejected, and a caller acting on the request would act
+     * on a save that never happened.
+     */
+    public LiveData<Event<Boolean>> getEntryAdded() {
+        return entryAdded;
+    }
+
     public void addEntry(LocalDate date, float weightKg) {
         if (date.isAfter(today.get())) {
             postMessage(R.string.error_date_future);
@@ -54,7 +67,9 @@ public class WeightViewModel extends ViewModel {
             // the last word, and keeps a second writer from ever becoming a crash.
             if (!repository.insert(new WeightEntry(date, weightKg))) {
                 postMessage(R.string.error_date_duplicate);
+                return;
             }
+            entryAdded.postValue(new Event<>(Boolean.TRUE));
         });
     }
 

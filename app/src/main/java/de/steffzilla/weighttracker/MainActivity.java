@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
@@ -59,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.action_statistics) {
-            startActivity(new Intent(this, StatisticsActivity.class));
+            openStatistics();
             return true;
         }
         if (item.getItemId() == R.id.action_backup) {
@@ -129,6 +130,22 @@ public class MainActivity extends AppCompatActivity {
                 Snackbar.make(binding.getRoot(), msgResId, Snackbar.LENGTH_LONG).show();
             }
         });
+        // Capturing a weight is almost always followed by looking at the trend, so go
+        // there once the entry is safely stored. StatisticsActivity opens on its default
+        // week range.
+        viewModel.getEntryAdded().observe(this, event -> {
+            boolean added = event.getContentIfNotConsumed() != null;
+            // Consume in any case, but only follow through while this screen is actually
+            // in front. A save whose write lands after the user left would otherwise be
+            // delivered at the next onStart and jump to the chart out of nowhere.
+            if (added && getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED)) {
+                openStatistics();
+            }
+        });
+    }
+
+    private void openStatistics() {
+        startActivity(new Intent(this, StatisticsActivity.class));
     }
 
     private void openAddEditSheet(WeightEntry entryToEdit) {

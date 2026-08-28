@@ -54,6 +54,12 @@ android {
             }
         }
         release {
+            // R8 (shrinking + obfuscation) stays off deliberately. The APK is installed by
+            // hand rather than shipped through a store, so the size it would save is worth
+            // less than what it risks: Room and View Binding resolve types reflectively, and
+            // a missing keep rule shows up only at runtime, only in a release build. Enable
+            // it only together with a manual pass over an installed release APK; keep rules
+            // belong in keepRules/rules.keep, not inline.
             optimization {
                 enable false
             }

@@ -33,8 +33,6 @@
     <string name="stat_change">Veränderung</string>
     <string name="stat_min">Min</string>
     <string name="stat_max">Max</string>
-    <string name="stat_weight_value">%1$s kg</string>
-    <string name="stat_change_value">%1$s kg</string>
     <string name="stat_empty">Keine Einträge im gewählten Zeitraum.</string>
     <string name="chart_content_description">Gewichtsverlauf %1$s: von %2$s kg am %3$s bis %4$s kg am %5$s, Veränderung %6$s kg.</string>
     <string name="chart_content_description_single">Gewichtsverlauf %1$s: ein Eintrag, %2$s kg am %3$s.</string>

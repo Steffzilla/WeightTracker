@@ -1,5 +1,7 @@
 package de.steffzilla.weighttracker.stats;
 
+import de.steffzilla.weighttracker.validation.WeightValidation;
+
 /**
  * The user-configured target band drawn on the chart: an optional lower and upper
  * weight limit in kg. Either side may be {@code null} (not set). Kept framework-free so
@@ -12,9 +14,13 @@ public record WeightBounds(Float lowerKg, Float upperKg) {
     public static final String PREF_KEY_LOWER = "pref_weight_lower";
     public static final String PREF_KEY_UPPER = "pref_weight_upper";
 
-    /** Accepted range, mirroring the weight-entry validation (0,1 .. 999,9 kg). */
+    /**
+     * Accepted range. The upper end is the one an entry may reach; the decimal-place rule
+     * of {@link WeightValidation} deliberately does not apply, since a target is a goal
+     * rather than a measurement and may sit anywhere between two readings.
+     */
     private static final float MIN_WEIGHT = 0.1f;
-    private static final float MAX_WEIGHT = 999.9f;
+    private static final float MAX_WEIGHT = WeightValidation.MAX_WEIGHT_KG;
 
     public static final WeightBounds NONE = new WeightBounds(null, null);
 

@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
@@ -25,6 +26,7 @@ import java.util.Locale;
 import de.steffzilla.weighttracker.R;
 import de.steffzilla.weighttracker.data.WeightEntry;
 import de.steffzilla.weighttracker.databinding.FragmentAddEditWeightBinding;
+import de.steffzilla.weighttracker.validation.WeightValidation;
 
 public class AddEditWeightBottomSheet extends BottomSheetDialogFragment {
 
@@ -158,7 +160,7 @@ public class AddEditWeightBottomSheet extends BottomSheetDialogFragment {
     private void onSaveClicked() {
         if (!validateWeight()) return;
 
-        float weight = parseWeight();
+        float weight = WeightValidation.parse(rawWeight());
         if (entryToEdit != null) {
             entryToEdit.setDate(selectedDate);
             entryToEdit.setWeightKg(weight);
@@ -171,40 +173,30 @@ public class AddEditWeightBottomSheet extends BottomSheetDialogFragment {
 
     private boolean validateWeight() {
         binding.textInputLayoutWeight.setError(null);
-        String raw = binding.editTextWeight.getText() != null
-                ? binding.editTextWeight.getText().toString().trim() : "";
 
-        if (raw.isEmpty()) {
-            binding.textInputLayoutWeight.setError(getString(R.string.error_weight_empty));
+        int errorRes = errorFor(WeightValidation.validate(rawWeight()));
+        if (errorRes != 0) {
+            binding.textInputLayoutWeight.setError(getString(errorRes));
             return false;
         }
-
-        String normalized = raw.replace(',', '.');
-        float value;
-        try {
-            value = Float.parseFloat(normalized);
-        } catch (NumberFormatException e) {
-            binding.textInputLayoutWeight.setError(getString(R.string.error_weight_invalid));
-            return false;
-        }
-
-        if (value <= 0 || value > 999.9f) {
-            binding.textInputLayoutWeight.setError(getString(R.string.error_weight_range));
-            return false;
-        }
-
-        int dotIndex = normalized.indexOf('.');
-        if (dotIndex != -1 && normalized.length() - dotIndex - 1 > 1) {
-            binding.textInputLayoutWeight.setError(getString(R.string.error_weight_decimal));
-            return false;
-        }
-
         return true;
     }
 
-    private float parseWeight() {
-        String raw = binding.editTextWeight.getText().toString().trim();
-        return Float.parseFloat(raw.replace(',', '.'));
+    /** The message for a rejected weight, or {@code 0} if it was accepted. */
+    @StringRes
+    private static int errorFor(WeightValidation.Result result) {
+        return switch (result) {
+            case VALID -> 0;
+            case EMPTY -> R.string.error_weight_empty;
+            case NOT_A_NUMBER -> R.string.error_weight_invalid;
+            case OUT_OF_RANGE -> R.string.error_weight_range;
+            case TOO_MANY_DECIMALS -> R.string.error_weight_decimal;
+        };
+    }
+
+    private String rawWeight() {
+        return binding.editTextWeight.getText() != null
+                ? binding.editTextWeight.getText().toString() : "";
     }
 
     @Override

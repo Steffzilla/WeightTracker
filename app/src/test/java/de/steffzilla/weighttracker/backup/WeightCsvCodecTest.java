@@ -104,6 +104,23 @@ public class WeightCsvCodecTest {
         assertTrue(result.entries().isEmpty());
     }
 
+    /** A file must not be able to smuggle in values the entry form would have rejected. */
+    @Test
+    public void decode_rejectsWeightAboveTheAllowedMaximum() {
+        ImportResult result = codec.decode("2026-01-01,999.9\n2026-01-02,1000\n");
+
+        assertEquals(List.of(2), result.errorLines());
+        assertEquals(1, result.entries().size());
+    }
+
+    @Test
+    public void decode_rejectsMoreThanOneDecimalPlace() {
+        ImportResult result = codec.decode("2026-01-01,80.55\n");
+
+        assertEquals(List.of(1), result.errorLines());
+        assertTrue(result.entries().isEmpty());
+    }
+
     @Test
     public void decode_handlesCarriageReturnLineEndings() {
         ImportResult result = codec.decode("date,weight_kg\r\n2026-01-01,80.0\r\n");

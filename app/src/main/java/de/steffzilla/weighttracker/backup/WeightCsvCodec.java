@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.steffzilla.weighttracker.data.WeightEntry;
+import de.steffzilla.weighttracker.validation.WeightValidation;
 
 /**
  * Pure, framework-free CSV serialization and parsing for weight entries. No Android or
@@ -18,7 +19,8 @@ import de.steffzilla.weighttracker.data.WeightEntry;
  * {@code yyyy-MM-dd,<weight>} row per entry, sorted by date descending (newest first).
  * Dates use ISO-8601 and weights use a locale-independent {@code '.'} decimal separator
  * via {@link Float#toString(float)}, so the file round-trips exactly regardless of the
- * device locale.
+ * device locale — for every weight that passed {@link WeightValidation} on the way in,
+ * whose shortest representation is the one decimal place it was entered with.
  */
 public final class WeightCsvCodec {
 
@@ -46,9 +48,11 @@ public final class WeightCsvCodec {
 
     /**
      * Parses CSV content. A leading header line is skipped if present and blank lines are
-     * ignored. Any line that is not exactly a valid ISO date and a positive, finite weight
-     * — and any date that appears more than once — is reported as an error via its 1-based
-     * line number. Callers must not import when {@link ImportResult#hasErrors()} is true.
+     * ignored. Any line that is not exactly a valid ISO date and a weight that
+     * {@link WeightValidation} accepts — and any date that appears more than once — is
+     * reported as an error via its 1-based line number. A file therefore cannot introduce
+     * weights the entry form would have rejected. Callers must not import when
+     * {@link ImportResult#hasErrors()} is true.
      */
     public ImportResult decode(String content) {
         List<ParsedEntry> entries = new ArrayList<>();
@@ -74,18 +78,18 @@ public final class WeightCsvCodec {
             }
 
             LocalDate date;
-            float weightKg;
             try {
                 date = LocalDate.parse(fields[0].trim());
-                weightKg = Float.parseFloat(fields[1].trim());
-            } catch (DateTimeParseException | NumberFormatException ex) {
+            } catch (DateTimeParseException ex) {
                 errorLines.add(lineNumber);
                 continue;
             }
-            if (!Float.isFinite(weightKg) || weightKg <= 0f) {
+            if (WeightValidation.validate(fields[1]) != WeightValidation.Result.VALID) {
                 errorLines.add(lineNumber);
                 continue;
             }
+            float weightKg = WeightValidation.parse(fields[1]);
+
             if (!seenDates.add(date)) {
                 errorLines.add(lineNumber); // duplicate date within the file
                 continue;

@@ -13,7 +13,10 @@ import android.view.View;
 import android.widget.TextView;
 
 import androidx.test.core.app.ActivityScenario;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -75,6 +78,43 @@ public class AddEditWeightInputTest {
             onView(withId(R.id.editTextWeight)).check(matches(withInputType(
                     InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL)));
         }
+    }
+
+    /**
+     * The sheet maps a {@link de.steffzilla.weighttracker.validation.WeightValidation}
+     * verdict to the matching message; the rule itself is unit-tested.
+     */
+    @Test
+    public void weightField_showsTheMessageForTheBrokenRule() {
+        try (ActivityScenario<MainActivity> scenario =
+                     ActivityScenario.launch(MainActivity.class)) {
+            onView(withId(R.id.fabAdd)).perform(click());
+
+            onView(withId(R.id.editTextWeight)).perform(typeText("80,55"));
+            closeSoftKeyboard();
+            onView(withId(R.id.buttonSave)).perform(click());
+
+            onView(withId(R.id.textInputLayoutWeight))
+                    .check(matches(withError(R.string.error_weight_decimal)));
+        }
+    }
+
+    private static Matcher<View> withError(int expectedRes) {
+        String expected = ApplicationProvider.getApplicationContext()
+                .getString(expectedRes);
+        return new TypeSafeMatcher<>() {
+            @Override
+            protected boolean matchesSafely(View view) {
+                return view instanceof TextInputLayout layout
+                        && expected.contentEquals(layout.getError() != null
+                        ? layout.getError() : "");
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("with error \"" + expected + "\"");
+            }
+        };
     }
 
     private static Matcher<View> withInputType(int expected) {

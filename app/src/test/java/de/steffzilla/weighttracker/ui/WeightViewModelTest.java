@@ -31,45 +31,77 @@ public class WeightViewModelTest {
     @Mock
     WeightRepository repository;
 
+    /**
+     * Deliberately years ahead of the wall clock, so "is this date in the future?" can
+     * only be answered from the injected one — a real clock would reject every date here
+     * as far in the future.
+     */
+    private static final LocalDate TODAY = LocalDate.of(2030, 6, 15);
+
     private WeightViewModel viewModel;
 
     @Before
     public void setup() {
-        viewModel = new WeightViewModel(repository, Runnable::run);
+        viewModel = new WeightViewModel(repository, Runnable::run, () -> TODAY);
     }
 
     @Test
     public void addEntry_futureDate_postsErrorAndSkipsInsert() {
-        viewModel.addEntry(LocalDate.now().plusDays(1), 80.0f);
+        viewModel.addEntry(TODAY.plusDays(1), 80.0f);
         assertNotNull(viewModel.getUserMessage().getValue().getContentIfNotConsumed());
         verify(repository, never()).insert(any());
     }
 
+    /**
+     * The clock's own day is not "after today". Reading the wall clock instead would
+     * reject this date as years away, which is what pins the injection.
+     */
+    @Test
+    public void addEntry_theClocksOwnDay_isAccepted() {
+        when(repository.existsForDate(TODAY)).thenReturn(false);
+        when(repository.insert(any())).thenReturn(true);
+
+        viewModel.addEntry(TODAY, 80.0f);
+
+        verify(repository).insert(any());
+        assertNull(viewModel.getUserMessage().getValue());
+    }
+
+    /** A day before the clock's, still years ahead of the wall clock. */
+    @Test
+    public void addEntry_aDayBeforeTheClock_isAccepted() {
+        LocalDate yesterday = TODAY.minusDays(1);
+        when(repository.existsForDate(yesterday)).thenReturn(false);
+        when(repository.insert(any())).thenReturn(true);
+
+        viewModel.addEntry(yesterday, 80.0f);
+
+        verify(repository).insert(any());
+        assertNull(viewModel.getUserMessage().getValue());
+    }
+
     @Test
     public void addEntry_duplicateDate_postsErrorAndSkipsInsert() {
-        LocalDate today = LocalDate.now();
-        when(repository.existsForDate(today)).thenReturn(true);
-        viewModel.addEntry(today, 80.0f);
+        when(repository.existsForDate(TODAY)).thenReturn(true);
+        viewModel.addEntry(TODAY, 80.0f);
         assertNotNull(viewModel.getUserMessage().getValue().getContentIfNotConsumed());
         verify(repository, never()).insert(any());
     }
 
     @Test
     public void addEntry_validData_insertsEntry() {
-        LocalDate today = LocalDate.now();
-        when(repository.existsForDate(today)).thenReturn(false);
+        when(repository.existsForDate(TODAY)).thenReturn(false);
         when(repository.insert(any())).thenReturn(true);
-        viewModel.addEntry(today, 84.5f);
+        viewModel.addEntry(TODAY, 84.5f);
         verify(repository).insert(argThat(e ->
-                e.getDate().equals(today) && e.getWeightKg() == 84.5f));
+                e.getDate().equals(TODAY) && e.getWeightKg() == 84.5f));
     }
 
     @Test
     public void addEntry_validData_noErrorMessage() {
-        LocalDate today = LocalDate.now();
-        when(repository.existsForDate(today)).thenReturn(false);
+        when(repository.existsForDate(TODAY)).thenReturn(false);
         when(repository.insert(any())).thenReturn(true);
-        viewModel.addEntry(today, 84.5f);
+        viewModel.addEntry(TODAY, 84.5f);
         assertNull(viewModel.getUserMessage().getValue());
     }
 
@@ -80,16 +112,15 @@ public class WeightViewModelTest {
      */
     @Test
     public void addEntry_dateTakenBetweenCheckAndInsert_postsError() {
-        LocalDate today = LocalDate.now();
-        when(repository.existsForDate(today)).thenReturn(false);
+        when(repository.existsForDate(TODAY)).thenReturn(false);
         when(repository.insert(any())).thenReturn(false);
-        viewModel.addEntry(today, 84.5f);
+        viewModel.addEntry(TODAY, 84.5f);
         assertNotNull(viewModel.getUserMessage().getValue().getContentIfNotConsumed());
     }
 
     @Test
     public void updateEntry_conflictingDate_postsErrorAndSkipsUpdate() {
-        LocalDate date = LocalDate.now().minusDays(1);
+        LocalDate date = TODAY.minusDays(1);
         WeightEntry entry = new WeightEntry(date, 80.0f);
         entry.setId(1L);
         when(repository.existsForDateExcluding(date, 1L)).thenReturn(true);
@@ -100,7 +131,7 @@ public class WeightViewModelTest {
 
     @Test
     public void updateEntry_validData_updatesEntry() {
-        LocalDate date = LocalDate.now().minusDays(1);
+        LocalDate date = TODAY.minusDays(1);
         WeightEntry entry = new WeightEntry(date, 80.0f);
         entry.setId(1L);
         when(repository.existsForDateExcluding(date, 1L)).thenReturn(false);
@@ -112,7 +143,7 @@ public class WeightViewModelTest {
 
     @Test
     public void updateEntry_dateTakenBetweenCheckAndUpdate_postsError() {
-        LocalDate date = LocalDate.now().minusDays(1);
+        LocalDate date = TODAY.minusDays(1);
         WeightEntry entry = new WeightEntry(date, 80.0f);
         entry.setId(1L);
         when(repository.existsForDateExcluding(date, 1L)).thenReturn(false);
@@ -123,7 +154,7 @@ public class WeightViewModelTest {
 
     @Test
     public void deleteEntry_callsRepositoryDelete() {
-        WeightEntry entry = new WeightEntry(LocalDate.now().minusDays(1), 80.0f);
+        WeightEntry entry = new WeightEntry(TODAY.minusDays(1), 80.0f);
         viewModel.deleteEntry(entry);
         verify(repository).delete(entry);
     }

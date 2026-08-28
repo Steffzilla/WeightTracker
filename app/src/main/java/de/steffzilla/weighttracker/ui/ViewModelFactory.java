@@ -37,7 +37,7 @@ public class ViewModelFactory implements ViewModelProvider.Factory {
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
         if (modelClass.equals(WeightViewModel.class)) {
             return (T) new WeightViewModel(
-                    container.repository(), container.databaseExecutor());
+                    container.repository(), container.databaseExecutor(), container.today());
         }
         if (modelClass.equals(StatisticsViewModel.class)) {
             return (T) new StatisticsViewModel(

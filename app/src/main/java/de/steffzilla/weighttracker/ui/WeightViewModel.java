@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 
 import de.steffzilla.weighttracker.R;
 import de.steffzilla.weighttracker.data.WeightEntry;
@@ -18,12 +19,15 @@ public class WeightViewModel extends ViewModel {
 
     private final WeightRepository repository;
     private final Executor executor;
+    private final Supplier<LocalDate> today;
 
     private final MutableLiveData<Event<Integer>> userMessage = new MutableLiveData<>();
 
-    public WeightViewModel(WeightRepository repository, Executor executor) {
+    public WeightViewModel(WeightRepository repository, Executor executor,
+                           Supplier<LocalDate> today) {
         this.repository = repository;
         this.executor = executor;
+        this.today = today;
     }
 
     public LiveData<List<WeightEntry>> getAllEntries() {
@@ -36,7 +40,7 @@ public class WeightViewModel extends ViewModel {
     }
 
     public void addEntry(LocalDate date, float weightKg) {
-        if (date.isAfter(LocalDate.now())) {
+        if (date.isAfter(today.get())) {
             postMessage(R.string.error_date_future);
             return;
         }

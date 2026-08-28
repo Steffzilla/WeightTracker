@@ -48,6 +48,14 @@ public class WeightChartView extends View {
     @Nullable
     private ChartModel model;
 
+    /**
+     * Pixel positions of the markers, reused across frames — {@code onDraw} runs on every
+     * invalidation and must not allocate. Sized when a model arrives and never shrunk, so
+     * only the first model of a given size costs anything.
+     */
+    private float[] pointXs = new float[0];
+    private float[] pointYs = new float[0];
+
     public WeightChartView(Context context) {
         this(context, null);
     }
@@ -100,6 +108,11 @@ public class WeightChartView extends View {
     /** Supplies a new model to render. The content description is set by the caller. */
     public void setModel(@Nullable ChartModel model) {
         this.model = model;
+        int n = model == null ? 0 : model.points().size();
+        if (pointXs.length < n) {
+            pointXs = new float[n];
+            pointYs = new float[n];
+        }
         invalidate();
     }
 
@@ -155,8 +168,6 @@ public class WeightChartView extends View {
         // Build the line path and remember pixel positions for the markers.
         linePath.reset();
         int n = model.points().size();
-        float[] xs = new float[n];
-        float[] ys = new float[n];
         for (int i = 0; i < n; i++) {
             ChartPoint p = model.points().get(i);
             float fraction = dayRange == 0
@@ -164,8 +175,8 @@ public class WeightChartView extends View {
                     : (float) (p.date().toEpochDay() - startDay) / dayRange;
             float x = plotLeft + fraction * plotWidth;
             float y = plotBottom - ((p.weightKg() - yMin) / yRange) * plotHeight;
-            xs[i] = x;
-            ys[i] = y;
+            pointXs[i] = x;
+            pointYs[i] = y;
             if (i == 0) {
                 linePath.moveTo(x, y);
             } else {
@@ -178,7 +189,7 @@ public class WeightChartView extends View {
         }
         if (model.showMarkers() || n == 1) {
             for (int i = 0; i < n; i++) {
-                canvas.drawCircle(xs[i], ys[i], markerRadius, markerPaint);
+                canvas.drawCircle(pointXs[i], pointYs[i], markerRadius, markerPaint);
             }
         }
 

@@ -53,12 +53,12 @@ Follow the official Android Architecture Guide (MVVM / Production-ready architec
 - **State Management**: ViewModels must expose UI state using observable patterns (like `LiveData` or Java-compatible observable fields) to decouple the UI from business logic.
 - **Pure logic packages**: `stats/` (chart and statistics computation), `backup/` (CSV codec, `ImportPlanner`, all-or-nothing import) and `validation/` (`WeightValidation`, the one rule for an acceptable weight entry, shared by the entry form and the CSV import) are framework-free Java. Put new computation there and unit-test it — keep it out of Views, Activities and DAOs.
 - **Dates**: a calendar day is persisted as an epoch day (`long` via `LocalDateConverter`), never a timestamp; "today" is passed into the calculators as a value instead of being read from the clock inside them, so day-dependent logic stays deterministically testable.
-- **ViewModel wiring**: a `ViewModelProvider.Factory` builds the repository from `AppDatabase.getInstance(...)` and injects an `Executors.newSingleThreadExecutor()`; the ViewModel runs all DB writes on it. Unit tests inject a direct executor (`Runnable::run`) and mock the repository.
+- **ViewModel wiring**: `AppContainer`, built once in `WeightTrackerApplication`, owns the repository, one process-wide background executor and the clock; the single `ViewModelFactory` only reads from it, so no screen constructs its own dependencies. Every ViewModel does its background work on that one executor, which is why writes from different screens cannot interleave. Unit tests inject a direct executor (`Runnable::run`) and mock the repository.
 
 Key paths:
 - `app/src/main/java/de/steffzilla/weighttracker/` — all source code, split by package:
   - `data/` — Room entity, DAO, repository, type converter, `AppDatabase`
-  - `ui/` — Activities, ViewModels + their `ViewModelProvider.Factory`, adapter, chart view
+  - `ui/` — Activities, ViewModels + the shared `ViewModelFactory`, adapter, chart view
   - `stats/`, `backup/`, `validation/` — framework-free pure logic, unit-tested
   - `settings/`, `about/` — Settings screen + theme handling, About screen + license catalogue
 - `app/src/main/res/` — layouts, themes, XML configs

@@ -15,8 +15,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Run a single test class (the umbrella task `test` does not accept --tests)
 ./gradlew :app:testDebugUnitTest --tests "de.steffzilla.weighttracker.stats.WeightStatisticsCalculatorTest"
 
-# Run instrumented tests (requires connected device or emulator). adb/emulator are NOT
-# on PATH — they live under ~/AppData/Local/Android/Sdk/{platform-tools,emulator}.
+# Run instrumented tests — EMULATOR ONLY. Several of them wipe weight_entries in @Before,
+# so running this against the user's phone destroys the real data. Check the target first.
+# adb/emulator are NOT on PATH — they live under
+# ~/AppData/Local/Android/Sdk/{platform-tools,emulator}.
 ./gradlew connectedAndroidTest
 
 # Run Android Lint — before every commit (see "Testing Strategy").

@@ -1,0 +1,9 @@
+# Line endings are decided here, not by anyone's core.autocrlf.
+* text=auto
+
+# cmd.exe wants CRLF in batch files; the shell wrapper must stay LF.
+*.bat text eol=crlf
+gradlew text eol=lf
+
+*.jar binary
+*.keep text

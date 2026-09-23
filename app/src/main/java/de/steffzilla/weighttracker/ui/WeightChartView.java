@@ -71,8 +71,9 @@ public class WeightChartView extends View {
         markerRadius = getResources().getDimension(R.dimen.chart_marker_radius);
         labelGap = getResources().getDimension(R.dimen.chart_label_gap);
 
+        // Material 1.14 no longer declares colorPrimary; AppCompat does.
         int lineColor = MaterialColors.getColor(
-                this, com.google.android.material.R.attr.colorPrimary);
+                this, androidx.appcompat.R.attr.colorPrimary);
         int gridColor = MaterialColors.getColor(
                 this, com.google.android.material.R.attr.colorOutlineVariant);
         textColor = MaterialColors.getColor(

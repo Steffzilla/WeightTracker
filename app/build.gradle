@@ -96,6 +96,16 @@ room {
     schemaDirectory "$projectDir/schemas"
 }
 
+// Mockito's inline mock maker needs its Java agent. Loaded explicitly instead of letting Mockito
+// self-attach at runtime, which future JDKs block (Mockito warns about it on every test run).
+configurations {
+    mockitoAgent
+}
+
+tasks.withType(Test).configureEach {
+    jvmArgs += "-javaagent:${configurations.mockitoAgent.asPath}"
+}
+
 dependencies {
     implementation libs.activity
     implementation libs.appcompat
@@ -109,6 +119,7 @@ dependencies {
     annotationProcessor libs.room.compiler
     testImplementation libs.junit
     testImplementation libs.mockito.core
+    mockitoAgent(libs.mockito.core) { transitive = false }
     testImplementation libs.arch.core.testing
     androidTestImplementation libs.espresso.core
     androidTestImplementation libs.ext.junit
